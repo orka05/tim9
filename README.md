@@ -1,36 +1,104 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Tim 7 — Aplikacija za pronalaženje trenera
 
-## Getting Started
+Web aplikacija za pronalaženje ličnih trenera, izrađena u **Next.js 16** (App Router), **TypeScript**, **Tailwind CSS v4** i **Prisma ORM** sa **PostgreSQL** bazom.
 
-First, run the development server:
+## Tehnologije
+
+| Sloj      | Tehnologija                     |
+| --------- | ------------------------------- |
+| Framework | Next.js 16 (App Router)         |
+| Jezik     | TypeScript                      |
+| Stilovi   | Tailwind CSS v4                 |
+| Baza      | PostgreSQL                      |
+| ORM       | Prisma 7 (`@prisma/adapter-pg`) |
+
+---
+
+## Pokretanje projekta
+
+### 1. Preduslovi
+
+Instalirani:
+
+- [Node.js](https://nodejs.org/) (verzija 20 ili novija)
+- [PostgreSQL](https://www.postgresql.org/download/) (+ opciono pgAdmin)
+- [Git](https://git-scm.com/)
+
+### 2. Kloniraj repozitorijum
+
+```bash
+git clone <URL_REPOZITORIJUMA>
+cd tim7-app
+```
+
+### 3. Instaliraj sve zavisnosti jednom komandom
+
+Sve zavisnosti su navedene u `package.json`. Dovoljno je pokrenuti:
+
+```bash
+npm install
+```
+
+> Ovo skida sve potrebne pakete i automatski pokreće `prisma generate`
+> (zahvaljujući `postinstall` skripti) — nije potrebno ništa dodatno ručno instalirati.
+
+### 4. Napravi bazu u PostgreSQL-u
+
+U pgAdmin (ili `psql`) napravi praznu bazu pod imenom **`tim7`**.
+
+### 5. Podesi konekciju (`.env`)
+
+Kopiraj `.env.example` u `.env` i upiši svoje podatke (korisnik, lozinka, ime baze):
+
+```bash
+cp .env.example .env
+```
+
+```env
+DATABASE_URL="postgresql://postgres:TVOJA_LOZINKA@localhost:5432/tim7?schema=public"
+```
+
+> `.env` se **ne** commit-uje na Git (svako ima svoju lozinku). Šablon je u `.env.example`.
+
+### 6. Napravi tabele u bazi
+
+```bash
+npm run db:migrate
+```
+
+Ovo primeni Prisma migracije i kreira sve tabele u tvojoj bazi.
+
+### 7. Pokreni aplikaciju
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Otvori [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+---
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Korisne komande
 
-## Learn More
+| Komanda              | Opis                             |
+| -------------------- | -------------------------------- |
+| `npm run dev`        | Pokreće development server       |
+| `npm run db:migrate` | Primeni Prisma migracije na bazu |
+| `npx prisma studio`  | Vizuelni pregled baze u browseru |
 
-To learn more about Next.js, take a look at the following resources:
+## Struktura projekta
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```
+app/
+  components/       # Reusable komponente (Logo, dugmad, ThemeToggle)
+  generated/        # Prisma client (auto-generisan, nije na Git-u)
+  lib/prisma.ts     # Prisma client singleton
+  login/            # /login stranica
+  register/         # /register stranica
+  trainers/         # /trainers — pretraga trenera
+  layout.tsx        # Root layout
+  page.tsx          # Landing stranica
+prisma/
+  schema.prisma     # Šema baze (modeli)
+  migrations/       # Istorija migracija
+```
