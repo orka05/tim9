@@ -1,7 +1,6 @@
 import Link from "next/link";
 import Logo from "./components/Logo";
-import LoginButton from "./components/LoginButton";
-import RegisterButton from "./components/RegisterButton";
+import AuthNav from "./components/AuthNav";
 import ThemeToggle from "./components/ThemeToggle";
 
 export default function Home() {
@@ -13,8 +12,7 @@ export default function Home() {
 
         <nav className="flex items-center gap-2 sm:gap-3">
           <ThemeToggle />
-          <LoginButton />
-          <RegisterButton />
+          <AuthNav />
         </nav>
       </header>
 

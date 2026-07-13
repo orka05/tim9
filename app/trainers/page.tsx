@@ -1,6 +1,5 @@
 import Logo from "../components/Logo";
-import LoginButton from "../components/LoginButton";
-import RegisterButton from "../components/RegisterButton";
+import AuthNav from "../components/AuthNav";
 import ThemeToggle from "../components/ThemeToggle";
 import Link from "next/link";
 import { prisma } from "../lib/prisma";
@@ -54,8 +53,7 @@ export default async function TrainersPage({
         <Logo />
         <nav className="flex items-center gap-2 sm:gap-3">
           <ThemeToggle />
-          <LoginButton />
-          <RegisterButton />
+          <AuthNav />
         </nav>
       </header>
 

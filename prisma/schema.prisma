@@ -15,9 +15,19 @@ datasource db {
 model Trainer {
   id        Int      @id @default(autoincrement())
   name      String
-  specialty String
-  city      String
-  pricePerSession Int
+  email     String   @unique
+  password  String
+  specialty String   @default("")
+  city      String   @default("")
+  pricePerSession Int @default(0)
   rating    Float    @default(1.0)
+  createdAt DateTime @default(now())
+}
+
+model Client {
+  id        Int      @id @default(autoincrement())
+  name      String
+  email     String   @unique
+  password  String
   createdAt DateTime @default(now())
 }
