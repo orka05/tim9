@@ -1,4 +1,4 @@
-# Tim 7 — Aplikacija za pronalaženje trenera
+# Tim 9 — Aplikacija za pronalaženje trenera
 
 Web aplikacija za pronalaženje ličnih trenera, izrađena u **Next.js 16** (App Router), **TypeScript**, **Tailwind CSS v4** i **Prisma ORM** sa **PostgreSQL** bazom.
 
@@ -28,7 +28,7 @@ Instalirani:
 
 ```bash
 git clone <URL_REPOZITORIJUMA>
-cd tim7-app
+cd tim9-app
 ```
 
 ### 3. Instaliraj sve zavisnosti jednom komandom
@@ -44,7 +44,7 @@ npm install
 
 ### 4. Napravi bazu u PostgreSQL-u
 
-U pgAdmin (ili `psql`) napravi praznu bazu pod imenom **`tim7`**.
+U pgAdmin (ili `psql`) napravi praznu bazu pod imenom **`tim9`**.
 
 ### 5. Podesi konekciju (`.env`)
 
@@ -55,7 +55,7 @@ cp .env.example .env
 ```
 
 ```env
-DATABASE_URL="postgresql://postgres:TVOJA_LOZINKA@localhost:5432/tim7?schema=public"
+DATABASE_URL="postgresql://postgres:TVOJA_LOZINKA@localhost:5432/tim9?schema=public"
 ```
 
 > `.env` se **ne** commit-uje na Git (svako ima svoju lozinku). Šablon je u `.env.example`.

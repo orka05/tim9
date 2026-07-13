@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Tim 7 — Pronađi svog trenera",
+  title: "Tim 9 — Pronađi svog trenera",
   description: "Poveži se sa verifikovanim ličnim trenerima u tvom gradu.",
 };
 

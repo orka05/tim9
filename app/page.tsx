@@ -80,7 +80,7 @@ export default function Home() {
 
       {/* Footer */}
       <footer className="border-t border-zinc-200 px-6 py-6 text-center text-sm text-zinc-500 dark:border-zinc-800">
-        © {new Date().getFullYear()} Sva prava zadržana Tim7.
+        © {new Date().getFullYear()} Sva prava zadržana Tim9.
       </footer>
     </div>
   );
