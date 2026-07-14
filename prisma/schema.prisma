@@ -12,22 +12,45 @@ datasource db {
   provider = "postgresql"
 }
 
+enum TrainerRequestStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+}
+
 model Trainer {
-  id        Int      @id @default(autoincrement())
-  name      String
-  email     String   @unique
-  password  String
-  specialty String   @default("")
-  city      String   @default("")
-  pricePerSession Int @default(0)
-  rating    Float    @default(1.0)
-  createdAt DateTime @default(now())
+  id              Int              @id @default(autoincrement())
+  name            String
+  email           String           @unique
+  password        String
+  specialty       String           @default("")
+  city            String           @default("")
+  pricePerSession Int              @default(0)
+  rating          Float            @default(1.0)
+  createdAt       DateTime         @default(now())
+  requests        TrainerRequest[]
 }
 
 model Client {
-  id        Int      @id @default(autoincrement())
+  id        Int              @id @default(autoincrement())
   name      String
-  email     String   @unique
+  email     String           @unique
   password  String
-  createdAt DateTime @default(now())
+  createdAt DateTime         @default(now())
+  requests  TrainerRequest[]
+}
+
+model TrainerRequest {
+  id          Int                  @id @default(autoincrement())
+  message     String               @db.VarChar(1000)
+  status      TrainerRequestStatus @default(PENDING)
+  clientId    Int
+  trainerId   Int
+  createdAt   DateTime             @default(now())
+  respondedAt DateTime?
+  client      Client               @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  trainer     Trainer              @relation(fields: [trainerId], references: [id], onDelete: Cascade)
+
+  @@index([clientId, createdAt])
+  @@index([trainerId, status, createdAt])
 }
