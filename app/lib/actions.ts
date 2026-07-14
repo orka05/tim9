@@ -2,6 +2,7 @@
 
 import bcrypt from "bcryptjs";
 import { redirect } from "next/navigation";
+import { revalidatePath } from "next/cache";
 import { prisma } from "./prisma";
 import { createSession, destroySession, requireSession } from "./session";
 
@@ -174,4 +175,89 @@ export async function updateProfileAction(
   });
 
   return { success: true };
+}
+
+export type TrainerRequestState = { error?: string; success?: boolean };
+
+export async function sendTrainerRequestAction(
+  _prev: TrainerRequestState,
+  formData: FormData,
+): Promise<TrainerRequestState> {
+  const session = await requireSession();
+  if (session.role !== "client") {
+    return { error: "Samo klijenti mogu slati zahteve trenerima." };
+  }
+
+  const trainerId = Number(formData.get("trainerId"));
+  const message = String(formData.get("message") ?? "").trim();
+
+  if (!Number.isInteger(trainerId) || trainerId <= 0) {
+    return { error: "Izabrani trener nije ispravan." };
+  }
+  if (!message) {
+    return { error: "Napiši poruku treneru." };
+  }
+  if (message.length > 1000) {
+    return { error: "Poruka može imati najviše 1000 karaktera." };
+  }
+
+  const [trainer, existingRequest] = await Promise.all([
+    prisma.trainer.findUnique({ where: { id: trainerId }, select: { id: true } }),
+    prisma.trainerRequest.findFirst({
+      where: {
+        clientId: session.userId,
+        trainerId,
+        status: { in: ["PENDING", "ACCEPTED"] },
+      },
+      select: { status: true },
+      orderBy: { status: "desc" },
+    }),
+  ]);
+
+  if (!trainer) {
+    return { error: "Trener više nije dostupan." };
+  }
+  if (existingRequest?.status === "ACCEPTED") {
+    return { error: "Trener je već prihvatio tvoj zahtev." };
+  }
+  if (existingRequest?.status === "PENDING") {
+    return { error: "Već imaš zahtev na čekanju kod ovog trenera." };
+  }
+
+  try {
+    await prisma.trainerRequest.create({
+      data: { clientId: session.userId, trainerId, message },
+    });
+  } catch {
+    return { error: "Zahtev nije poslat. Pokušaj ponovo." };
+  }
+
+  revalidatePath("/");
+  return { success: true };
+}
+
+export async function respondTrainerRequestAction(formData: FormData) {
+  const session = await requireSession();
+  if (session.role !== "trainer") {
+    redirect("/");
+  }
+
+  const requestId = Number(formData.get("requestId"));
+  const decision = String(formData.get("decision"));
+  if (!Number.isInteger(requestId) || requestId <= 0) return;
+  if (decision !== "ACCEPTED" && decision !== "REJECTED") return;
+
+  await prisma.trainerRequest.updateMany({
+    where: {
+      id: requestId,
+      trainerId: session.userId,
+      status: "PENDING",
+    },
+    data: {
+      status: decision,
+      respondedAt: new Date(),
+    },
+  });
+
+  revalidatePath("/");
 }
