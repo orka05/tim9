@@ -60,13 +60,19 @@ DATABASE_URL="postgresql://postgres:TVOJA_LOZINKA@localhost:5432/tim9?schema=pub
 
 > `.env` se **ne** commit-uje na Git (svako ima svoju lozinku). Šablon je u `.env.example`.
 
-### 6. Napravi tabele u bazi
+### 6. Napravi tabele i ubaci početne podatke
 
 ```bash
-npm run db:migrate
+npm run db:setup
 ```
 
-Ovo primeni Prisma migracije i kreira sve tabele u tvojoj bazi.
+Ovo pokrene migracije (kreira sve tabele) **i** ubaci početne podatke preko seed skripte
+`prisma/seed.ts` — **10 trenera** (različite ocene), **test trener** `trener@mail.com`, i
+**3 klijenta** (`klijent@gmail.com`, `klijent2@gmail.com`, `klijent3@gmail.com`).
+Lozinka za sve seed naloge je `trener123`.
+
+> Seed je idempotentan (koristi `upsert`) — možeš ga pokrenuti više puta bez duplikata:
+> `npm run db:seed`. Za Čist restart baze: `npm run db:reset` pa `npm run db:seed`.
 
 ### 7. Pokreni aplikaciju
 
@@ -83,7 +89,10 @@ Otvori [http://localhost:3000](http://localhost:3000).
 | Komanda              | Opis                             |
 | -------------------- | -------------------------------- |
 | `npm run dev`        | Pokreće development server       |
+| `npm run db:setup`   | Migracije + seed (sve odjednom)  |
 | `npm run db:migrate` | Primeni Prisma migracije na bazu |
+| `npm run db:seed`    | Ubaci početne podatke (seed)     |
+| `npm run db:reset`   | Obriši i ponovo napravi bazu     |
 | `npx prisma studio`  | Vizuelni pregled baze u browseru |
 
 ## Struktura projekta
