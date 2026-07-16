@@ -20,10 +20,10 @@ return (
     <>
       {session.role === "trainer" && (
         <Link
-          href="/equipment"
+          href="/vezbe"
           className="text-sm font-medium text-zinc-700 transition hover:text-indigo-600 dark:text-zinc-300 dark:hover:text-indigo-400"
         >
-          Sprave
+          Vežbe
         </Link>
       )}
       <Link
