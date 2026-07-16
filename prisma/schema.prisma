@@ -30,6 +30,7 @@ model Trainer {
   createdAt       DateTime         @default(now())
   requests        TrainerRequest[]
   exercises       Exercise[]
+  trainings       Training[]
 }
 
 model Client {
@@ -39,6 +40,7 @@ model Client {
   password  String
   createdAt DateTime         @default(now())
   requests  TrainerRequest[]
+  trainings Training[]
 }
 
 model TrainerRequest {
@@ -72,6 +74,39 @@ model Exercise {
   createdAt   DateTime         @default(now())
   updatedAt   DateTime         @updatedAt
   trainer     Trainer          @relation(fields: [trainerId], references: [id], onDelete: Cascade)
+  blocks      TrainingBlock[]
 
   @@index([trainerId, createdAt])
+}
+
+model Training {
+  id           Int             @id @default(autoincrement())
+  title        String          @db.VarChar(120)
+  scheduledFor DateTime        @db.Date
+  trainerId    Int
+  clientId     Int
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+  trainer      Trainer         @relation(fields: [trainerId], references: [id], onDelete: Cascade)
+  client       Client          @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  blocks       TrainingBlock[]
+
+  @@index([trainerId, scheduledFor])
+  @@index([clientId, scheduledFor])
+}
+
+model TrainingBlock {
+  id          Int      @id @default(autoincrement())
+  trainingId  Int
+  exerciseId  Int
+  position    Int
+  sets        Int
+  repetitions Int
+  restSeconds Int
+  notes       String   @default("") @db.VarChar(500)
+  training    Training @relation(fields: [trainingId], references: [id], onDelete: Cascade)
+  exercise    Exercise @relation(fields: [exerciseId], references: [id], onDelete: Restrict)
+
+  @@unique([trainingId, position])
+  @@index([exerciseId])
 }
