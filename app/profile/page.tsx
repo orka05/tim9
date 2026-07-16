@@ -9,10 +9,8 @@ import { prisma } from "../lib/prisma";
 export default async function ProfilePage() {
   const session = await requireSession();
 
-  const isTrainer = session.role === "trainer";
-
   let data;
-  if (isTrainer) {
+  if (session.role === "trainer") {
     const trainer = await prisma.trainer.findUnique({
       where: { id: session.userId },
     });
@@ -30,6 +28,20 @@ export default async function ProfilePage() {
       pricePerSession: trainer.pricePerSession,
       rating: trainer.rating,
     };
+  } else if (session.role === "admin") {
+    const admin = await prisma.admin.findUnique({
+      where: { id: session.userId },
+    });
+    if (!admin) {
+      redirect("/");
+    }
+    data = {
+      id: admin.id,
+      name: admin.name,
+      email: admin.email,
+      createdAt: admin.createdAt.toISOString(),
+      role: "admin" as const,
+    };
   } else {
     const client = await prisma.client.findUnique({
       where: { id: session.userId },
@@ -46,6 +58,13 @@ export default async function ProfilePage() {
     };
   }
 
+  const roleLabel =
+    session.role === "trainer"
+      ? "Trener nalog"
+      : session.role === "admin"
+        ? "Administrator nalog"
+        : "Klijent nalog";
+
   return (
     <div className="flex flex-1 flex-col bg-zinc-50 font-sans text-zinc-900 dark:bg-black dark:text-zinc-100">
       {/* Header */}
@@ -61,7 +80,7 @@ export default async function ProfilePage() {
         <div className="w-full max-w-md rounded-2xl border border-zinc-200 bg-white p-8 shadow-sm dark:border-zinc-800 dark:bg-zinc-950">
           <h1 className="text-2xl font-bold">Moj profil</h1>
           <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
-            {isTrainer ? "Trener nalog" : "Klijent nalog"} — izmeni svoje podatke.
+            {roleLabel} — izmeni svoje podatke.
           </p>
 
           <ProfileForm data={data} />

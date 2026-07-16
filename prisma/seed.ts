@@ -28,6 +28,8 @@ const clients = [
   { name: "Klijent Treći", email: "klijent3@gmail.com" },
 ];
 
+const admins = [{ name: "Administrator", email: "admin@gmail.com" }];
+
 async function main() {
   const password = await bcrypt.hash("trener123", 10);
 
@@ -35,7 +37,7 @@ async function main() {
     await prisma.trainer.upsert({
       where: { email: t.email },
       update: {}, // ne diramo postojeće naloge
-      create: { ...t, password },
+      create: { ...t, password, status: "ACTIVE" },
     });
   }
 
@@ -47,8 +49,17 @@ async function main() {
     });
   }
 
+  const adminPassword = await bcrypt.hash("admin123", 10);
+  for (const a of admins) {
+    await prisma.admin.upsert({
+      where: { email: a.email },
+      update: {},
+      create: { ...a, password: adminPassword },
+    });
+  }
+
   console.log(
-    `Seed gotov: ${trainers.length} trenera, ${clients.length} klijenata (lozinka: "trener123").`,
+    `Seed gotov: ${trainers.length} trenera, ${clients.length} klijenata, ${admins.length} admin (lozinka trenera/klijenata: "trener123", admin: "admin123").`,
   );
 }
 

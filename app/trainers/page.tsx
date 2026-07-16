@@ -16,7 +16,7 @@ export default async function TrainersPage({
 }) {
   const { q = "", city = "", page = "1" } = await searchParams;
 
-  const where: Prisma.TrainerWhereInput = {};
+  const where: Prisma.TrainerWhereInput = { status: "ACTIVE" };
   if (q.trim()) {
     where.OR = [
       { name: { contains: q, mode: "insensitive" } },

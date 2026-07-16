@@ -48,6 +48,11 @@ export default function RegisterForm() {
           {state.error}
         </p>
       )}
+      {state.info && (
+        <p className="rounded-lg bg-green-50 px-3 py-2 text-sm text-green-700 dark:bg-green-950/50 dark:text-green-400">
+          {state.info}
+        </p>
+      )}
 
       <div className="flex flex-col gap-1.5">
         <label htmlFor="name" className="text-sm font-medium">

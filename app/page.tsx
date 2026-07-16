@@ -3,7 +3,7 @@ import AuthNav from "./components/AuthNav";
 import Logo from "./components/Logo";
 import ThemeToggle from "./components/ThemeToggle";
 import TrainerRequestModal from "./components/TrainerRequestModal";
-import { respondTrainerRequestAction } from "./lib/actions";
+import { respondTrainerRequestAction, deleteTrainerAction } from "./lib/actions";
 import { prisma } from "./lib/prisma";
 import { getSession } from "./lib/session";
 
@@ -73,6 +73,7 @@ function PublicHome() {
 
 async function ClientHome({ clientId }: { clientId: number }) {
   const trainers = await prisma.trainer.findMany({
+    where: { status: "ACTIVE" },
     include: {
       requests: {
         where: {
@@ -262,9 +263,88 @@ async function TrainerHome({ trainerId }: { trainerId: number }) {
   );
 }
 
+async function AdminHome() {
+  const trainers = await prisma.trainer.findMany({
+    where: { status: "ACTIVE" },
+    orderBy: [{ rating: "desc" }, { name: "asc" }],
+  });
+
+  return (
+    <PageShell>
+      <main className="mx-auto w-full max-w-4xl flex-1 px-4 py-12 sm:px-6 sm:py-16">
+        <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
+          Administracija trenera
+        </h1>
+        <p className="mt-2 text-zinc-600 dark:text-zinc-400">
+          Aktivni treneri sortirani po prosečnoj oceni. Baniranjem se nalog
+          deaktivira (ne briše trajno).
+        </p>
+
+        <div className="mt-4 flex flex-wrap gap-3">
+          <Link
+            href="/zahtevi-trenera"
+            className="rounded-lg border border-zinc-300 px-4 py-2 text-sm font-medium transition hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-900"
+          >
+            Zahtevi za registraciju
+          </Link>
+          <Link
+            href="/banovani-treneri"
+            className="rounded-lg border border-zinc-300 px-4 py-2 text-sm font-medium transition hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-900"
+          >
+            Banovani treneri
+          </Link>
+        </div>
+
+        {trainers.length === 0 ? (
+          <div className="mt-10 rounded-2xl border border-dashed border-zinc-300 p-10 text-center text-zinc-500 dark:border-zinc-700">
+            Nema registrovanih trenera.
+          </div>
+        ) : (
+          <ul className="mt-8 flex flex-col gap-3">
+            {trainers.map((trainer, index) => (
+              <li
+                key={trainer.id}
+                className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-950 sm:p-5"
+              >
+                <div className="flex items-center gap-4">
+                  <span className="w-6 text-center text-sm font-bold text-zinc-400">
+                    {index + 1}.
+                  </span>
+                  <div>
+                    <h2 className="text-lg font-bold">{trainer.name}</h2>
+                    <p className="text-sm text-zinc-500">
+                      {trainer.specialty || "Trener"}
+                      {trainer.city ? ` · ${trainer.city}` : ""}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-4">
+                  <span className="whitespace-nowrap text-sm font-semibold text-amber-500">
+                    ★ {trainer.rating.toFixed(1)}
+                  </span>
+                  <form action={deleteTrainerAction}>
+                    <input type="hidden" name="trainerId" value={trainer.id} />
+                    <button
+                      type="submit"
+                      className="rounded-lg border border-red-300 px-4 py-2 text-sm font-semibold text-red-600 transition hover:bg-red-50 dark:border-red-900 dark:text-red-400 dark:hover:bg-red-950/40"
+                    >
+                      Ban
+                    </button>
+                  </form>
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
+      </main>
+    </PageShell>
+  );
+}
+
 export default async function Home() {
   const session = await getSession();
   if (!session) return <PublicHome />;
   if (session.role === "client") return <ClientHome clientId={session.userId} />;
+  if (session.role === "admin") return <AdminHome />;
   return <TrainerHome trainerId={session.userId} />;
 }
