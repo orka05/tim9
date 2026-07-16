@@ -16,8 +16,16 @@ export default async function AuthNav() {
     );
   }
 
-  return (
+return (
     <>
+      {session.role === "trainer" && (
+        <Link
+          href="/equipment"
+          className="text-sm font-medium text-zinc-700 transition hover:text-indigo-600 dark:text-zinc-300 dark:hover:text-indigo-400"
+        >
+          Sprave
+        </Link>
+      )}
       <Link
         href="/profile"
         className="text-sm font-bold text-zinc-900 transition hover:text-indigo-600 dark:text-zinc-100 dark:hover:text-indigo-400"
