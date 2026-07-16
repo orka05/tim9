@@ -1,36 +1,31 @@
 "use client";
 
 import { useActionState, useState } from "react";
+import CategorySelect from "./CategorySelect";
+import { CATEGORY_BY_VALUE } from "../lib/exerciseCategories";
 import {
-  updateEquipmentAction,
-  deleteEquipmentAction,
-  type EquipmentState,
-} from "../lib/equipmentActions";
+  updateExerciseAction,
+  deleteExerciseAction,
+  type ExerciseState,
+} from "../lib/exerciseActions";
 
-const initialState: EquipmentState = {};
+const initialState: ExerciseState = {};
 
-const categoryLabels: Record<string, string> = {
-  KARDIO: "Kardio",
-  TEGOVI: "Tegovi",
-  MASINE: "Mašine",
-  FUNKCIONALNI_TRENING: "Funkcionalni trening",
-  OSTALO: "Ostalo",
-};
-
-export type EquipmentDTO = {
+export type ExerciseDTO = {
   id: number;
   name: string;
   description: string;
   category: string;
-  quantity: number;
 };
 
-export default function EquipmentItem({ item }: { item: EquipmentDTO }) {
+export default function ExerciseItem({ item }: { item: ExerciseDTO }) {
   const [editing, setEditing] = useState(false);
   const [state, formAction, pending] = useActionState(
-    updateEquipmentAction,
+    updateExerciseAction,
     initialState,
   );
+
+  const cat = CATEGORY_BY_VALUE[item.category];
 
   if (editing) {
     return (
@@ -50,30 +45,15 @@ export default function EquipmentItem({ item }: { item: EquipmentDTO }) {
             maxLength={100}
             className="rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm outline-none dark:border-zinc-700 dark:bg-zinc-900"
           />
-          <select
-            name="category"
-            defaultValue={item.category}
-            className="rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm outline-none dark:border-zinc-700 dark:bg-zinc-900"
-          >
-            {Object.entries(categoryLabels).map(([value, label]) => (
-              <option key={value} value={value}>
-                {label}
-              </option>
-            ))}
-          </select>
-          <input
-            name="quantity"
-            type="number"
-            min={1}
-            defaultValue={item.quantity}
-            className="rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm outline-none dark:border-zinc-700 dark:bg-zinc-900"
-          />
           <textarea
             name="description"
             defaultValue={item.description}
             maxLength={500}
             rows={3}
             className="resize-none rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm outline-none dark:border-zinc-700 dark:bg-zinc-900"
+          />
+          <CategorySelect
+            defaultValue={(cat?.value ?? "SPRAVA") as "SPRAVA"}
           />
 
           {state.error && (
@@ -107,16 +87,20 @@ export default function EquipmentItem({ item }: { item: EquipmentDTO }) {
     <li className="flex flex-col rounded-2xl border border-zinc-200 bg-white p-5 text-left shadow-sm transition hover:shadow-md dark:border-zinc-800 dark:bg-zinc-950">
       <div className="flex items-start justify-between gap-3">
         <h3 className="text-lg font-semibold">{item.name}</h3>
-        <span className="rounded-full bg-indigo-50 px-3 py-1 text-xs font-medium text-indigo-600 dark:bg-indigo-950/60 dark:text-indigo-300">
-          {categoryLabels[item.category] ?? item.category}
+        <span
+          className={`rounded-full px-3 py-1 text-xs font-medium ${
+            cat?.badge ??
+            "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300"
+          }`}
+        >
+          {cat?.label ?? item.category}
         </span>
       </div>
       {item.description && (
-        <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
+        <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
           {item.description}
         </p>
       )}
-      <p className="mt-2 text-sm text-zinc-500">Količina: {item.quantity}</p>
 
       <div className="mt-4 flex justify-end gap-2">
         <button
@@ -126,7 +110,7 @@ export default function EquipmentItem({ item }: { item: EquipmentDTO }) {
         >
           Izmeni
         </button>
-        <form action={deleteEquipmentAction}>
+        <form action={deleteExerciseAction}>
           <input type="hidden" name="id" value={item.id} />
           <button
             type="submit"

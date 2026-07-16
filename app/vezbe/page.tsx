@@ -1,12 +1,12 @@
 import Logo from "../components/Logo";
 import AuthNav from "../components/AuthNav";
 import ThemeToggle from "../components/ThemeToggle";
-import EquipmentForm from "../components/EquipmentForm";
-import EquipmentItem from "../components/EquipmentItem";
+import ExerciseForm from "../components/ExerciseForm";
+import ExerciseItem from "../components/ExerciseItem";
 import { prisma } from "../lib/prisma";
 import { requireSession } from "../lib/session";
 
-export default async function EquipmentPage() {
+export default async function VezbePage() {
   const session = await requireSession();
 
   if (session.role !== "trainer") {
@@ -19,7 +19,7 @@ export default async function EquipmentPage() {
     );
   }
 
-  const equipment = await prisma.equipment.findMany({
+  const exercises = await prisma.exercise.findMany({
     where: { trainerId: session.userId },
     orderBy: { createdAt: "desc" },
   });
@@ -35,33 +35,30 @@ export default async function EquipmentPage() {
       </header>
 
       <main className="mx-auto flex w-full max-w-4xl flex-1 flex-col px-4 py-10 sm:px-6">
-        <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
-          Sprave za vežbanje
-        </h1>
+        <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">Vežbe</h1>
         <p className="mt-2 text-zinc-600 dark:text-zinc-400">
-          Upravljaj spravama koje koristiš na treninzima.
+          Tvoj skup vežbi od kojih kasnije praviš treninge za klijente.
         </p>
 
         <div className="mt-8">
-          <EquipmentForm />
+          <ExerciseForm />
         </div>
 
         <p className="mt-8 text-sm text-zinc-500">
-          {equipment.length === 0
-            ? "Još uvek nemaš dodatih sprava."
-            : `Ukupno sprava: ${equipment.length}`}
+          {exercises.length === 0
+            ? "Još uvek nemaš dodatih vežbi."
+            : `Ukupno vežbi: ${exercises.length}`}
         </p>
 
         <ul className="mt-4 grid gap-4 sm:grid-cols-2">
-          {equipment.map((item) => (
-            <EquipmentItem
+          {exercises.map((item) => (
+            <ExerciseItem
               key={item.id}
               item={{
                 id: item.id,
                 name: item.name,
                 description: item.description,
                 category: item.category,
-                quantity: item.quantity,
               }}
             />
           ))}

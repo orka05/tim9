@@ -29,7 +29,7 @@ model Trainer {
   rating          Float            @default(1.0)
   createdAt       DateTime         @default(now())
   requests        TrainerRequest[]
-  equipment       Equipment[]
+  exercises       Exercise[]
 }
 
 model Client {
@@ -56,24 +56,21 @@ model TrainerRequest {
   @@index([trainerId, status, createdAt])
 }
 
-enum EquipmentCategory {
-  KARDIO
-  TEGOVI
-  MASINE
-  FUNKCIONALNI_TRENING
-  OSTALO
+enum ExerciseCategory {
+  SPRAVA
+  REKVIZIT
+  BODYWEIGHT
 }
 
-model Equipment {
-  id          Int               @id @default(autoincrement())
+model Exercise {
+  id          Int              @id @default(autoincrement())
   name        String
-  description String            @default("") @db.VarChar(500)
-  category    EquipmentCategory @default(OSTALO)
-  quantity    Int               @default(1)
+  description String           @default("") @db.VarChar(500)
+  category    ExerciseCategory @default(SPRAVA)
   trainerId   Int
-  createdAt   DateTime          @default(now())
-  updatedAt   DateTime          @updatedAt
-  trainer     Trainer           @relation(fields: [trainerId], references: [id], onDelete: Cascade)
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+  trainer     Trainer          @relation(fields: [trainerId], references: [id], onDelete: Cascade)
 
   @@index([trainerId, createdAt])
 }

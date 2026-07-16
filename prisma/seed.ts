@@ -19,7 +19,7 @@ const trainers = [
   { name: "Ivana Lukić", email: "ivana.lukic@gmail.com", specialty: "Snaga i kondicija", city: "Niš", pricePerSession: 2150, rating: 7.2 },
   { name: "Vladimir Stojanović", email: "vladimir.stojanovic@gmail.com", specialty: "Bodybuilding", city: "Beograd", pricePerSession: 3200, rating: 9.6 },
   // Test trener za laku prijavu
-  { name: "Trener Test", email: "trener@mail.com", specialty: "Snaga i kondicija", city: "Beograd", pricePerSession: 2000, rating: 8.0 },
+  { name: "Trener Test", email: "trener@gmail.com", specialty: "Snaga i kondicija", city: "Beograd", pricePerSession: 2000, rating: 8.0 },
 ];
 
 const clients = [
