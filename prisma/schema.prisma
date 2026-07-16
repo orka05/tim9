@@ -67,6 +67,7 @@ model Exercise {
   name        String
   description String           @default("") @db.VarChar(500)
   category    ExerciseCategory @default(SPRAVA)
+  videoPath   String?
   trainerId   Int
   createdAt   DateTime         @default(now())
   updatedAt   DateTime         @updatedAt

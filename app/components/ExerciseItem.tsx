@@ -16,6 +16,7 @@ export type ExerciseDTO = {
   name: string;
   description: string;
   category: string;
+  videoPath: string | null;
 };
 
 export default function ExerciseItem({ item }: { item: ExerciseDTO }) {
@@ -55,6 +56,18 @@ export default function ExerciseItem({ item }: { item: ExerciseDTO }) {
           <CategorySelect
             defaultValue={(cat?.value ?? "SPRAVA") as "SPRAVA"}
           />
+
+          <div className="flex flex-col gap-1">
+            <label className="text-sm font-medium">
+              {item.videoPath ? "Zameni video (opciono)" : "Dodaj video (opciono)"}
+            </label>
+            <input
+              name="video"
+              type="file"
+              accept="video/mp4,video/webm,video/ogg,video/quicktime"
+              className="rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-600 outline-none file:mr-3 file:rounded-md file:border-0 file:bg-indigo-600 file:px-3 file:py-1 file:text-sm file:font-medium file:text-white hover:file:bg-indigo-700 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-400"
+            />
+          </div>
 
           {state.error && (
             <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600 dark:bg-red-950/50 dark:text-red-400">
@@ -100,6 +113,15 @@ export default function ExerciseItem({ item }: { item: ExerciseDTO }) {
         <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
           {item.description}
         </p>
+      )}
+
+      {item.videoPath && (
+        <video
+          controls
+          preload="metadata"
+          src={item.videoPath}
+          className="mt-3 w-full rounded-lg border border-zinc-200 dark:border-zinc-800"
+        />
       )}
 
       <div className="mt-4 flex justify-end gap-2">
