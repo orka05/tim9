@@ -237,6 +237,22 @@ async function TrainerHome({ trainerId }: { trainerId: number }) {
                     </button>
                   </form>
                 )}
+                {request.status === "ACCEPTED" && (
+                  <div className="mt-5 flex flex-col justify-end gap-3 sm:flex-row">
+                    <Link
+                      href={`/treninzi?clientId=${request.clientId}`}
+                      className="rounded-lg border border-indigo-300 px-5 py-2.5 text-center text-sm font-semibold text-indigo-600 transition hover:bg-indigo-50 dark:border-indigo-800 dark:text-indigo-400 dark:hover:bg-indigo-950/40"
+                    >
+                      Prikaži treninge
+                    </Link>
+                    <Link
+                      href={`/treninzi/novi?clientId=${request.clientId}`}
+                      className="rounded-lg bg-indigo-600 px-5 py-2.5 text-center text-sm font-semibold text-white transition hover:bg-indigo-700"
+                    >
+                      Kreiraj trening
+                    </Link>
+                  </div>
+                )}
               </li>
             ))}
           </ul>
