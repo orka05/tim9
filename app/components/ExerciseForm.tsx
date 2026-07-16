@@ -57,6 +57,22 @@ export default function ExerciseForm() {
 
       <CategorySelect />
 
+      <div className="flex flex-col gap-1.5">
+        <label htmlFor="ex-video" className="text-sm font-medium">
+          Video vežbe (opciono)
+        </label>
+        <input
+          id="ex-video"
+          name="video"
+          type="file"
+          accept="video/mp4,video/webm,video/ogg,video/quicktime"
+          className="rounded-lg border border-zinc-300 bg-white px-3 py-2.5 text-sm text-zinc-600 outline-none file:mr-3 file:rounded-md file:border-0 file:bg-indigo-600 file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-white hover:file:bg-indigo-700 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-400"
+        />
+        <span className="text-xs text-zinc-400">
+          MP4, WebM, OGG ili MOV — do 50 MB.
+        </span>
+      </div>
+
       {state.error && (
         <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600 dark:bg-red-950/50 dark:text-red-400">
           {state.error}

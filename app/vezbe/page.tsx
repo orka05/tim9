@@ -59,6 +59,7 @@ export default async function VezbePage() {
                 name: item.name,
                 description: item.description,
                 category: item.category,
+                videoPath: item.videoPath,
               }}
             />
           ))}

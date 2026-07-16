@@ -45,3 +45,6 @@ next-env.d.ts
 /app/generated
 
 /app/generated/prisma
+
+# uploads (video vežbi se čuvaju lokalno, ne na Git-u)
+/public/uploads

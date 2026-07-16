@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { prisma } from "./prisma";
 import { requireSession } from "./session";
+import { saveVideoFile, deleteVideoFile, UploadError } from "./upload";
 import type { ExerciseCategory } from "../generated/prisma/client";
 
 export type ExerciseState = { error?: string; success?: boolean };
@@ -44,11 +45,23 @@ export async function createExerciseAction(
     return { error: "Opis može imati najviše 500 karaktera." };
   }
 
+  let videoPath: string | null = null;
+  const video = formData.get("video");
+  if (video instanceof File && video.size > 0) {
+    try {
+      videoPath = await saveVideoFile(video);
+    } catch (e) {
+      if (e instanceof UploadError) return { error: e.message };
+      throw e;
+    }
+  }
+
   await prisma.exercise.create({
     data: {
       name,
       description,
       category,
+      videoPath,
       trainerId: session.userId,
     },
   });
@@ -87,13 +100,33 @@ export async function updateExerciseAction(
     return { error: "Opis može imati najviše 500 karaktera." };
   }
 
-  const result = await prisma.exercise.updateMany({
+  // Trenutna vežba (provera vlasništva + stara putanja videa)
+  const existing = await prisma.exercise.findFirst({
     where: { id, trainerId: session.userId },
-    data: { name, description, category },
+  });
+  if (!existing) {
+    return { error: "Vežba nije pronađena ili nemaš dozvolu da je menjaš." };
+  }
+
+  let newVideoPath = existing.videoPath;
+  const video = formData.get("video");
+  if (video instanceof File && video.size > 0) {
+    try {
+      newVideoPath = await saveVideoFile(video);
+    } catch (e) {
+      if (e instanceof UploadError) return { error: e.message };
+      throw e;
+    }
+  }
+
+  await prisma.exercise.update({
+    where: { id: existing.id },
+    data: { name, description, category, videoPath: newVideoPath },
   });
 
-  if (result.count === 0) {
-    return { error: "Vežba nije pronađena ili nemaš dozvolu da je menjaš." };
+  // Obriši stari fajl ako je zamenjen novim
+  if (video instanceof File && video.size > 0 && existing.videoPath) {
+    await deleteVideoFile(existing.videoPath);
   }
 
   revalidatePath("/vezbe");
@@ -112,9 +145,13 @@ export async function deleteExerciseAction(formData: FormData) {
   const id = Number(formData.get("id"));
   if (!Number.isInteger(id) || id <= 0) return;
 
-  await prisma.exercise.deleteMany({
+  const existing = await prisma.exercise.findFirst({
     where: { id, trainerId: session.userId },
   });
+  if (!existing) return;
+
+  await prisma.exercise.delete({ where: { id: existing.id } });
+  await deleteVideoFile(existing.videoPath);
 
   revalidatePath("/vezbe");
 }
