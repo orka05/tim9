@@ -10,7 +10,7 @@ type ProfileData = {
   name: string;
   email: string;
   createdAt: string;
-  role: "client" | "trainer";
+  role: "client" | "trainer" | "admin";
   specialty?: string;
   city?: string;
   pricePerSession?: number;

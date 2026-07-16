@@ -34,6 +34,22 @@ export default async function AuthNav() {
           Vežbe
         </Link>
       )}
+      {session.role === "admin" && (
+        <>
+          <Link
+            href="/zahtevi-trenera"
+            className="text-sm font-medium text-zinc-700 transition hover:text-indigo-600 dark:text-zinc-300 dark:hover:text-indigo-400"
+          >
+            Zahtevi
+          </Link>
+          <Link
+            href="/banovani-treneri"
+            className="text-sm font-medium text-zinc-700 transition hover:text-indigo-600 dark:text-zinc-300 dark:hover:text-indigo-400"
+          >
+            Banovani
+          </Link>
+        </>
+      )}
       <Link
         href="/profile"
         className="text-sm font-bold text-zinc-900 transition hover:text-indigo-600 dark:text-zinc-100 dark:hover:text-indigo-400"

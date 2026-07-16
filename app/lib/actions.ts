@@ -6,7 +6,7 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "./prisma";
 import { createSession, destroySession, requireSession } from "./session";
 
-export type AuthState = { error?: string };
+export type AuthState = { error?: string; info?: string };
 
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -34,28 +34,32 @@ export async function registerAction(
     return { error: "Nepoznat tip naloga." };
   }
 
-  // Email mora biti jedinstven u obe tabele
-  const [existingClient, existingTrainer] = await Promise.all([
+  // Email mora biti jedinstven u svim tabelama naloga
+  const [existingClient, existingTrainer, existingAdmin] = await Promise.all([
     prisma.client.findUnique({ where: { email } }),
     prisma.trainer.findUnique({ where: { email } }),
+    prisma.admin.findUnique({ where: { email } }),
   ]);
-  if (existingClient || existingTrainer) {
+  if (existingClient || existingTrainer || existingAdmin) {
     return { error: "Nalog sa ovom email adresom već postoji." };
   }
 
   const hashed = await bcrypt.hash(password, 10);
 
   if (role === "trainer") {
-    const trainer = await prisma.trainer.create({
+    // Trener nalog nije odmah aktivan — čeka odobrenje administratora
+    await prisma.trainer.create({
       data: { name, email, password: hashed },
     });
-    await createSession({ userId: trainer.id, role: "trainer", name: trainer.name });
-  } else {
-    const client = await prisma.client.create({
-      data: { name, email, password: hashed },
-    });
-    await createSession({ userId: client.id, role: "client", name: client.name });
+    return {
+      info: "Zahtev za nalog trenera je poslat administratoru na odobrenje. Bićeš obavešten kada bude odobren.",
+    };
   }
+
+  const client = await prisma.client.create({
+    data: { name, email, password: hashed },
+  });
+  await createSession({ userId: client.id, role: "client", name: client.name });
 
   redirect("/");
 }
@@ -73,16 +77,22 @@ export async function loginAction(
     return { error: "Unesi email i lozinku." };
   }
 
-  const client = await prisma.client.findUnique({ where: { email } });
-  const trainer = client
+  const admin = await prisma.admin.findUnique({ where: { email } });
+  const client = admin
     ? null
-    : await prisma.trainer.findUnique({ where: { email } });
+    : await prisma.client.findUnique({ where: { email } });
+  const trainer =
+    admin || client
+      ? null
+      : await prisma.trainer.findUnique({ where: { email } });
 
-  const account = client
-    ? { ...client, role: "client" as const }
-    : trainer
-      ? { ...trainer, role: "trainer" as const }
-      : null;
+  const account = admin
+    ? { ...admin, role: "admin" as const }
+    : client
+      ? { ...client, role: "client" as const }
+      : trainer
+        ? { ...trainer, role: "trainer" as const }
+        : null;
 
   if (!account) {
     return { error: "Pogrešan email ili lozinka." };
@@ -91,6 +101,16 @@ export async function loginAction(
   const valid = await bcrypt.compare(password, account.password);
   if (!valid) {
     return { error: "Pogrešan email ili lozinka." };
+  }
+
+  // Trener mora biti odobren od strane administratora
+  if (trainer) {
+    if (trainer.status === "PENDING") {
+      return { error: "Tvoj nalog još uvek čeka odobrenje administratora." };
+    }
+    if (trainer.status === "BANNED") {
+      return { error: "Tvoj nalog je deaktiviran. Obrati se administratoru." };
+    }
   }
 
   await createSession({
@@ -131,16 +151,19 @@ export async function updateProfileAction(
     return { error: "Nova lozinka mora imati bar 6 karaktera." };
   }
 
-  // Email mora ostati jedinstven (u obe tabele), izuzev sopstvenog naloga
-  const [clientWithEmail, trainerWithEmail] = await Promise.all([
+  // Email mora ostati jedinstven (u svim tabelama naloga), izuzev sopstvenog naloga
+  const [clientWithEmail, trainerWithEmail, adminWithEmail] = await Promise.all([
     prisma.client.findUnique({ where: { email } }),
     prisma.trainer.findUnique({ where: { email } }),
+    prisma.admin.findUnique({ where: { email } }),
   ]);
   const takenByOther =
     (clientWithEmail &&
       !(session.role === "client" && clientWithEmail.id === session.userId)) ||
     (trainerWithEmail &&
-      !(session.role === "trainer" && trainerWithEmail.id === session.userId));
+      !(session.role === "trainer" && trainerWithEmail.id === session.userId)) ||
+    (adminWithEmail &&
+      !(session.role === "admin" && adminWithEmail.id === session.userId));
   if (takenByOther) {
     return { error: "Email adresa je već zauzeta." };
   }
@@ -159,6 +182,11 @@ export async function updateProfileAction(
     await prisma.trainer.update({
       where: { id: session.userId },
       data: { name, email, specialty, city, pricePerSession, ...passwordData },
+    });
+  } else if (session.role === "admin") {
+    await prisma.admin.update({
+      where: { id: session.userId },
+      data: { name, email, ...passwordData },
     });
   } else {
     await prisma.client.update({
@@ -259,5 +287,59 @@ export async function respondTrainerRequestAction(formData: FormData) {
     },
   });
 
+  revalidatePath("/");
+}
+
+export async function deleteTrainerAction(formData: FormData) {
+  const session = await requireSession();
+  if (session.role !== "admin") {
+    redirect("/");
+  }
+
+  const trainerId = Number(formData.get("trainerId"));
+  if (!Number.isInteger(trainerId) || trainerId <= 0) return;
+
+  // „Brisanje“ = ban: nalog se deaktivira umesto trajnog brisanja
+  await prisma.trainer.updateMany({
+    where: { id: trainerId },
+    data: { status: "BANNED" },
+  });
+
+  revalidatePath("/");
+}
+
+export async function approveTrainerAction(formData: FormData) {
+  const session = await requireSession();
+  if (session.role !== "admin") {
+    redirect("/");
+  }
+
+  const trainerId = Number(formData.get("trainerId"));
+  if (!Number.isInteger(trainerId) || trainerId <= 0) return;
+
+  await prisma.trainer.updateMany({
+    where: { id: trainerId, status: "PENDING" },
+    data: { status: "ACTIVE" },
+  });
+
+  revalidatePath("/zahtevi-trenera");
+  revalidatePath("/");
+}
+
+export async function unbanTrainerAction(formData: FormData) {
+  const session = await requireSession();
+  if (session.role !== "admin") {
+    redirect("/");
+  }
+
+  const trainerId = Number(formData.get("trainerId"));
+  if (!Number.isInteger(trainerId) || trainerId <= 0) return;
+
+  await prisma.trainer.updateMany({
+    where: { id: trainerId, status: "BANNED" },
+    data: { status: "ACTIVE" },
+  });
+
+  revalidatePath("/banovani-treneri");
   revalidatePath("/");
 }

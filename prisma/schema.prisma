@@ -18,6 +18,12 @@ enum TrainerRequestStatus {
   REJECTED
 }
 
+enum TrainerStatus {
+  PENDING
+  ACTIVE
+  BANNED
+}
+
 model Trainer {
   id              Int              @id @default(autoincrement())
   name            String
@@ -27,6 +33,7 @@ model Trainer {
   city            String           @default("")
   pricePerSession Int              @default(0)
   rating          Float            @default(1.0)
+  status          TrainerStatus    @default(PENDING)
   createdAt       DateTime         @default(now())
   requests        TrainerRequest[]
   exercises       Exercise[]
@@ -41,6 +48,14 @@ model Client {
   createdAt DateTime         @default(now())
   requests  TrainerRequest[]
   trainings Training[]
+}
+
+model Admin {
+  id        Int      @id @default(autoincrement())
+  name      String
+  email     String   @unique
+  password  String
+  createdAt DateTime @default(now())
 }
 
 model TrainerRequest {

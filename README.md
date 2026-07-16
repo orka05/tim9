@@ -11,27 +11,27 @@ relacionu bazu podataka PostgreSQL i objektno-relaciono mapiranje (ORM) putem al
 Prisma. Autentifikacija korisnika implementirana je bezbednosno, korišćenjem
 heširanja lozinki i potpisanih JWT tokena.
 
-## 2. Funkcionalne karakteristike
+## 2. Funkcionalni zahtevi
 
-**Zajedničke funkcionalnosti**
+- Registracija, prijava i odjava korisnika (uloga klijent ili trener)
+- Izmena korisničkih podataka na profilu
+- CRUD nad vežbama (sprave, rekviziti, bodyweight) sa opisom i opcionim videom
+- Pretraga i pregled trenera (sortiranje po oceni, paginacija)
+- Slanje zahteva treneru i njegova obrada (prihvatanje/odbijanje)
+- Kreiranje i pregled treninga za klijenta
+- Ocenjivanje treninga, trenera i pojedinačnih vežbi
+- Administratorski pregled trenera po prosečnoj oceni
 
-- Registracija i prijava korisnika (uloga klijent ili trener)
-- Upravljanje sopstvenim profilom (izmena ličnih podataka)
-- Podrška za svetlu i tamnu temu korisničkog interfejsa
+## 3. Nefunkcionalni zahtevi
 
-**Funkcionalnosti klijenta**
+- Bezbednost: heširane lozinke (bcrypt), JWT sesije, kontrola pristupa rutama
+- Responzivan interfejs sa podrškom za svetlu i tamnu temu
+- Performanse: paginacija rezultata i indeksi nad bazom
+- Validacija svih korisničkih unosa na serverskoj strani
+- Modularan i statički tipiziran kod (TypeScript)
+- Prenosivost: Node.js + PostgreSQL, konfiguracija u `.env`
 
-- Pregled i pretraga trenera prema imenu, specijalnosti i gradu
-- Sortiranje trenera prema oceni i paginacija rezultata
-- Slanje zahteva za saradnju sa propratnom porukom
-
-**Funkcionalnosti trenera**
-
-- Pregled i obrada (prihvatanje/odbijanje) pristiglih zahteva klijenata
-- Vođenje evidencije vežbi (naziv, opis, kategorija) sa opcionim video prilogom
-- Klasifikacija vežbi u kategorije: sprava, rekvizit i telesna težina (bodyweight)
-
-## 3. Arhitektura i korišćene tehnologije
+## 4. Arhitektura i korišćene tehnologije
 
 | Sloj                         | Tehnologija                     |
 | ---------------------------- | ------------------------------- |
@@ -47,9 +47,9 @@ pristup bazi podataka izvršavaju isključivo na serverskoj strani.
 
 ---
 
-## 4. Uputstvo za instalaciju i pokretanje
+## 5. Uputstvo za instalaciju i pokretanje
 
-### 4.1. Preduslovi
+### 5.1. Preduslovi
 
 Instalirani:
 
@@ -57,14 +57,14 @@ Instalirani:
 - [PostgreSQL](https://www.postgresql.org/download/) (+ opciono pgAdmin)
 - [Git](https://git-scm.com/)
 
-### 4.2. Kloniranje repozitorijuma
+### 5.2. Kloniranje repozitorijuma
 
 ```bash
 git clone <URL_REPOZITORIJUMA>
 cd tim9-app
 ```
 
-### 4.3. Instalacija zavisnosti
+### 5.3. Instalacija zavisnosti
 
 Sve zavisnosti su navedene u `package.json`. Dovoljno je pokrenuti:
 
@@ -75,11 +75,11 @@ npm install
 > Ovo skida sve potrebne pakete i automatski pokreće `prisma generate`
 > (zahvaljujući `postinstall` skripti) — nije potrebno ništa dodatno ručno instalirati.
 
-### 4.4. Kreiranje baze podataka
+### 5.4. Kreiranje baze podataka
 
 U pgAdmin (ili `psql`) napravi praznu bazu pod imenom **`tim9`**.
 
-### 4.5. Konfiguracija konekcije (`.env`)
+### 5.5. Konfiguracija konekcije (`.env`)
 
 Kopiraj `.env.example` u `.env` i upiši svoje podatke (korisnik, lozinka, ime baze):
 
@@ -93,7 +93,7 @@ DATABASE_URL="postgresql://postgres:TVOJA_LOZINKA@localhost:5432/tim9?schema=pub
 
 > `.env` se **ne** commit-uje na Git (svako ima svoju lozinku). Šablon je u `.env.example`.
 
-### 4.6. Kreiranje šeme i unos početnih podataka
+### 5.6. Kreiranje šeme i unos početnih podataka
 
 ```bash
 npm run db:setup
@@ -108,7 +108,7 @@ Lozinka za sve seed naloge je `trener123`.
 > naredbom `npm run db:seed`. Za čist restart baze koristiti `npm run db:reset`, a zatim
 > `npm run db:seed`.
 
-### 4.7. Pokretanje aplikacije
+### 5.7. Pokretanje aplikacije
 
 ```bash
 npm run dev
@@ -118,7 +118,7 @@ Otvori [http://localhost:3000](http://localhost:3000).
 
 ---
 
-## 5. Skripte i komande
+## 6. Skripte i komande
 
 | Komanda              | Opis                             |
 | -------------------- | -------------------------------- |
@@ -129,7 +129,7 @@ Otvori [http://localhost:3000](http://localhost:3000).
 | `npm run db:reset`   | Obriši i ponovo napravi bazu     |
 | `npx prisma studio`  | Vizuelni pregled baze u browseru |
 
-## 6. Struktura projekta
+## 7. Struktura projekta
 
 ```
 app/
@@ -149,7 +149,7 @@ prisma/
 public/uploads/     # Otpremljeni video prilozi (van sistema za verzionisanje)
 ```
 
-## 7. Model podataka
+## 8. Model podataka
 
 Relacioni model obuhvata sledeće entitete:
 
@@ -164,7 +164,7 @@ Relacioni model obuhvata sledeće entitete:
 Video prilozi vežbi čuvaju se u datotečnom sistemu (direktorijum `public/uploads`),
 dok se u bazi podataka evidentira isključivo putanja do odgovarajuće datoteke.
 
-## 8. Bezbednosni aspekti
+## 9. Bezbednosni aspekti
 
 - **Lozinke** se ne čuvaju u izvornom obliku, već kao kriptografski heš (`bcrypt`).
 - **Sesije** se realizuju potpisanim JWT tokenom (algoritam HS256) koji se čuva u
