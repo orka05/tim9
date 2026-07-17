@@ -4,28 +4,54 @@
 
 Projekat predstavlja veb aplikaciju čija je namena posredovanje između korisnika
 (klijenata) koji traže usluge ličnog treninga i sertifikovanih trenera. Sistem
-omogućava pretragu i pregled trenera, slanje i obradu zahteva za saradnju, kao i
-vođenje evidencije vežbi koje trener koristi pri kreiranju treninga. Aplikacija je
-realizovana kao full-stack rešenje zasnovano na okruženju Next.js, uz
-relacionu bazu podataka PostgreSQL i objektno-relaciono mapiranje (ORM) putem alata
-Prisma. Autentifikacija korisnika implementirana je bezbednosno, korišćenjem
-heširanja lozinki i potpisanih JWT tokena.
+omogućava pretragu i pregled trenera, slanje i obradu zahteva za saradnju, vođenje
+evidencije vežbi i kreiranje treninga, upravljanje opremom klijenta, kao i međusobno
+ocenjivanje i komentarisanje trenera i klijenata. Administrator odobrava trenere,
+upravlja katalogom opreme i moderira sistem. Aplikacija je realizovana kao full-stack
+rešenje zasnovano na okruženju Next.js, uz relacionu bazu podataka PostgreSQL i
+objektno-relaciono mapiranje (ORM) putem alata Prisma. Autentifikacija korisnika
+implementirana je bezbednosno, korišćenjem heširanja lozinki i potpisanih JWT tokena.
 
 ## 2. Funkcionalni zahtevi
 
-- Registracija, prijava i odjava korisnika (uloga klijent ili trener)
-- Izmena korisničkih podataka na profilu
-- CRUD nad vežbama (sprave, rekviziti, bodyweight) sa opisom i opcionim videom
-- Pretraga i pregled trenera (sortiranje po oceni, paginacija)
-- Slanje zahteva treneru i njegova obrada (prihvatanje/odbijanje)
-- Kreiranje i pregled treninga za klijenta
-- Ocenjivanje treninga, trenera i pojedinačnih vežbi
-- Administratorski pregled trenera po prosečnoj oceni
+### Klijent
+
+- Registracija, prijava i odjava naloga
+- Izmena profila (ime, e-adresa, lozinka) i unos telesnih podataka (visina, težina, godine)
+- Pretraga i pregled trenera (sortiranje po oceni, filter po gradu, paginacija)
+- Pregled svih ocena i komentara pojedinog trenera (iskačući prozor / popup)
+- Slanje zahteva treneru uz propratnu poruku
+- Pregled svojih trenera i treninga koje su mu dodelili (sa vežbama i uputstvima)
+- Ocenjivanje trenera (jedna ocena po treneru), treninga i pojedinačnih vežbi — uz komentar
+- Upravljanje opremom: označavanje bazne opreme iz kataloga kao svoje i kreiranje
+  sopstvene (custom) opreme
+- Uvid u sopstvenu prosečnu ocenu kao klijent
+
+### Trener
+
+- Registracija (novi trener čeka odobrenje administratora pre pristupa sistemu)
+- CRUD nad vežbama (sprava / rekvizit / bodyweight) sa opisom i opcionim video prilogom
+- Obrada pristiglih zahteva klijenata (prihvatanje / odbijanje), uz uvid u ocenu klijenta
+- Pregled podataka klijenta (visina/težina/godine), njegove opreme i ocena — u zasebnom tabu
+- Kreiranje, izmena i brisanje treninga (blokovi vežbi sa serijama, ponavljanjima i pauzom)
+- Uvid u ocene i komentare klijenta (za ceo trening i za pojedinačne vežbe)
+- Ocenjivanje klijenta („kakav je bio u saradnji"), jedna ocena po klijentu — uz komentar
+- Postavljanje mesečne cene i pregled sopstvene prosečne ocene
+
+### Administrator
+
+- Odobravanje trenera koji čekaju odobrenje (status `PENDING`)
+- Banovanje i odbanovanje trenera
+- Pregled aktivnih trenera sortiranih po prosečnoj oceni
+- Upravljanje katalogom bazne opreme (dodavanje, izmena, brisanje)
 
 ## 3. Nefunkcionalni zahtevi
 
-- Bezbednost: heširane lozinke (bcrypt), JWT sesije, kontrola pristupa rutama
+- Bezbednost: heširane lozinke (bcrypt), JWT sesije, kontrola pristupa rutama po ulozi
+- Slojevita arhitektura (MVVM + Repository) sa jasno razdvojenim odgovornostima
+- Prosečne ocene se preračunavaju atomično (u transakciji) pri svakoj novoj oceni
 - Responzivan interfejs sa podrškom za svetlu i tamnu temu
+- Prelamanje dugačkog teksta bez probijanja kontejnera (robusni UI)
 - Performanse: paginacija rezultata i indeksi nad bazom
 - Validacija svih korisničkih unosa na serverskoj strani
 - Modularan i statički tipiziran kod (TypeScript)
@@ -44,6 +70,13 @@ heširanja lozinki i potpisanih JWT tokena.
 Aplikacija koristi arhitekturu serverskih komponenti (React Server Components) i
 serverskih akcija (Server Actions) okruženja Next.js, čime se poslovna logika i
 pristup bazi podataka izvršavaju isključivo na serverskoj strani.
+
+Interno je kod organizovan po obrascu **MVVM + Repository**:
+
+- **Model** (`app/models/`) — domenske klase entiteta (atributi i metode).
+- **Repository** (`app/repositories/`) — jedino mesto koje komunicira sa bazom (Prisma).
+- **ViewModel** (`app/viewmodels/`) — priprema podatke prilagođene svakom ekranu.
+- **View** (`app/(views)/`) — stranice (rute) koje prikazuju podatke iz view-modela.
 
 ---
 
@@ -100,13 +133,22 @@ npm run db:setup
 ```
 
 Ovo pokrene migracije (kreira sve tabele) **i** ubaci početne podatke preko seed skripte
-`prisma/seed.ts` — **10 trenera** (različite ocene), **test trener** `trener@mail.com`, i
-**3 klijenta** (`klijent@gmail.com`, `klijent2@gmail.com`, `klijent3@gmail.com`).
-Lozinka za sve seed naloge je `trener123`.
+`prisma/seed.ts`:
 
-> Seed je idempotentan (koristi `upsert`) — može se pokrenuti više puta bez duplikata
-> naredbom `npm run db:seed`. Za čist restart baze koristiti `npm run db:reset`, a zatim
-> `npm run db:seed`.
+- **13 trenera** — 11 aktivnih (različite ocene), 1 koji čeka odobrenje (`pending@gmail.com`),
+  1 banovan (`banned@gmail.com`), plus test trener `trener@gmail.com` (ima vežbe, zahteve,
+  treninge, ocene);
+- **3 klijenta** (`klijent@gmail.com`, `klijent2@gmail.com`, `klijent3@gmail.com`) sa
+  telesnim podacima; prvi klijent ima trenere, treninge, ocene i opremu;
+- **1 administrator** (`admin@gmail.com`);
+- **katalog bazne opreme**, kao i demonstracioni zahtevi (PRIHVAĆEN / NA ČEKANJU / ODBIJEN),
+  treninzi sa ocenama i komentarima, te ocene trenera i klijenata.
+
+Lozinka za trenere i klijente je `trener123`, a za administratora `admin123`.
+
+> Seed je idempotentan — relacioni podaci se kreiraju samo na praznoj bazi, pa se može
+> pokrenuti više puta bez duplikata (`npm run db:seed`). Za potpun čist restart baze
+> (brisanje + migracije + seed u jednom koraku) koristiti `npm run db:reset`.
 
 ### 5.7. Pokretanje aplikacije
 
@@ -120,28 +162,28 @@ Otvori [http://localhost:3000](http://localhost:3000).
 
 ## 6. Skripte i komande
 
-| Komanda              | Opis                             |
-| -------------------- | -------------------------------- |
-| `npm run dev`        | Pokreće development server       |
-| `npm run db:setup`   | Migracije + seed (sve odjednom)  |
-| `npm run db:migrate` | Primeni Prisma migracije na bazu |
-| `npm run db:seed`    | Ubaci početne podatke (seed)     |
-| `npm run db:reset`   | Obriši i ponovo napravi bazu     |
-| `npx prisma studio`  | Vizuelni pregled baze u browseru |
+| Komanda              | Opis                                          |
+| -------------------- | --------------------------------------------- |
+| `npm run dev`        | Pokreće development server                    |
+| `npm run db:setup`   | Migracije + seed (sve odjednom)               |
+| `npm run db:migrate` | Primeni Prisma migracije na bazu              |
+| `npm run db:seed`    | Ubaci početne podatke (seed)                  |
+| `npm run db:reset`   | Obriši, migriraj i napuni bazu (reset + seed) |
+| `npx prisma studio`  | Vizuelni pregled baze u browseru              |
 
 ## 7. Struktura projekta
 
 ```
 app/
-  components/       # Reupotrebljive komponente (Logo, ThemeToggle, forme...)
-  lib/              # Poslovna logika: pristup bazi, sesije, serverske akcije
-  login/            # Ruta /login — prijava korisnika
-  register/         # Ruta /register — registracija korisnika
-  trainers/         # Ruta /trainers — pretraga trenera
-  profile/          # Ruta /profile — izmena podataka o nalogu
-  vezbe/            # Ruta /vezbe — evidencija vežbi trenera
+  (views)/          # View sloj — sve rute/stranice (route group; ne utiče na URL)
+  models/           # Domenske klase entiteta (atributi i metode)
+  repositories/     # Pristup bazi (Prisma) — jedino mesto koje priča sa bazom
+  viewmodels/       # Priprema podataka po ekranu (poziva repozitorijume)
+  components/       # Reupotrebljive UI komponente (forme, modali, dugmad...)
+  lib/              # Serverske akcije, sesije, upload, Prisma klijent
+  generated/prisma/ # Generisani Prisma klijent
   layout.tsx        # Korenski raspored (layout) aplikacije
-  page.tsx          # Početna stranica (prilagođena ulozi korisnika)
+  globals.css       # Globalni stilovi
 prisma/
   schema.prisma     # Šema baze podataka (entiteti i relacije)
   migrations/       # Istorija migracija baze
@@ -153,13 +195,25 @@ public/uploads/     # Otpremljeni video prilozi (van sistema za verzionisanje)
 
 Relacioni model obuhvata sledeće entitete:
 
-- **Client** — nalog klijenta (ime, jedinstvena e-adresa, heširana lozinka).
-- **Trainer** — nalog i profil trenera (specijalnost, grad, mesečna cena, ocena).
+- **Client** — nalog klijenta (ime, jedinstvena e-adresa, heširana lozinka, visina,
+  težina, godine, prosečna ocena).
+- **Trainer** — nalog i profil trenera (specijalnost, grad, mesečna cena, prosečna ocena,
+  status: `PENDING` / `ACTIVE` / `BANNED`).
+- **Admin** — administratorski nalog.
 - **TrainerRequest** — zahtev klijenta upućen treneru, sa statusom
-  (`PENDING`, `ACCEPTED`, `REJECTED`) i porukom; povezan relacijama sa entitetima
-  Client i Trainer.
-- **Exercise** — vežba u evidenciji trenera (naziv, opis, kategorija, opciona
-  putanja do video priloga); povezana sa entitetom Trainer.
+  (`PENDING`, `ACCEPTED`, `REJECTED`) i porukom; povezan sa entitetima Client i Trainer.
+- **Exercise** — vežba u evidenciji trenera (naziv, opis, kategorija, opciona putanja do
+  video priloga); povezana sa entitetom Trainer.
+- **Training** — trening koji trener dodeljuje klijentu (naziv, datum, ocena i komentar
+  klijenta za ceo trening).
+- **TrainingBlock** — jedan blok/vežba unutar treninga (serije, ponavljanja, pauza,
+  napomena, ocena klijenta za tu vežbu); spona između entiteta Training i Exercise.
+- **Equipment** — oprema (bazna iz kataloga koju kreira admin ili custom koju pravi klijent).
+- **ClientEquipment** — spona „klijent poseduje opremu" (veza više-na-više).
+- **TrainerReview** — ocena i komentar koje klijent daje treneru (jedna po paru
+  klijent–trener); pokreće preračun prosečne ocene trenera.
+- **ClientReview** — ocena i komentar koje trener daje klijentu (jedna po paru
+  trener–klijent); pokreće preračun prosečne ocene klijenta.
 
 Video prilozi vežbi čuvaju se u datotečnom sistemu (direktorijum `public/uploads`),
 dok se u bazi podataka evidentira isključivo putanja do odgovarajuće datoteke.
