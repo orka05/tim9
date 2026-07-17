@@ -1,8 +1,11 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { prisma } from "./prisma";
 import { requireSession } from "./session";
+import { TrainingRepository } from "../repositories/TrainingRepository";
+import { TrainingBlockRepository } from "../repositories/TrainingBlockRepository";
+import { TrainerRequestRepository } from "../repositories/TrainerRequestRepository";
+import { ExerciseRepository } from "../repositories/ExerciseRepository";
 
 export type TrainingState = {
   error?: string;
@@ -92,48 +95,34 @@ export async function createTrainingAction(
     return { error: "Dodaj od 1 do 50 ispravno popunjenih blokova." };
   }
 
-  const acceptedRequest = await prisma.trainerRequest.findFirst({
-    where: {
-      trainerId: session.userId,
-      clientId,
-      status: "ACCEPTED",
-    },
-    select: { id: true },
-  });
-  if (!acceptedRequest) {
+  const hasAccepted = await TrainerRequestRepository.hasAccepted(
+    session.userId,
+    clientId,
+  );
+  if (!hasAccepted) {
     return { error: "Trening možeš kreirati samo za prihvaćenog klijenta." };
   }
 
   const exerciseIds = [...new Set(blocks.map((block) => block.exerciseId))];
-  const ownedExercises = await prisma.exercise.count({
-    where: { id: { in: exerciseIds }, trainerId: session.userId },
-  });
+  const ownedExercises = await ExerciseRepository.countOwned(
+    exerciseIds,
+    session.userId,
+  );
   if (ownedExercises !== exerciseIds.length) {
     return { error: "Jedna ili više vežbi nisu deo tvog skupa vežbi." };
   }
 
-  const training = await prisma.training.create({
-    data: {
-      title,
-      scheduledFor,
-      trainerId: session.userId,
-      clientId,
-      blocks: {
-        create: blocks.map((block, position) => ({
-          exerciseId: block.exerciseId,
-          position,
-          sets: block.sets,
-          repetitions: block.repetitions,
-          restSeconds: block.restSeconds,
-          notes: block.notes,
-        })),
-      },
-    },
+  const trainingId = await TrainingRepository.create({
+    title,
+    scheduledFor,
+    trainerId: session.userId,
+    clientId,
+    blocks,
   });
 
   revalidatePath("/");
   revalidatePath("/treninzi/novi");
-  return { success: true, trainingId: training.id };
+  return { success: true, trainingId };
 }
 
 export async function updateTrainingAction(
@@ -163,41 +152,27 @@ export async function updateTrainingAction(
     return { error: "Dodaj od 1 do 50 ispravno popunjenih blokova." };
   }
 
-  const training = await prisma.training.findFirst({
-    where: { id: trainingId, trainerId: session.userId },
-    select: { id: true, clientId: true },
-  });
+  const training = await TrainingRepository.findOwnedSummary(
+    trainingId,
+    session.userId,
+  );
   if (!training) {
     return { error: "Trening nije pronađen ili nemaš dozvolu da ga menjaš." };
   }
 
   const exerciseIds = [...new Set(blocks.map((block) => block.exerciseId))];
-  const ownedExercises = await prisma.exercise.count({
-    where: { id: { in: exerciseIds }, trainerId: session.userId },
-  });
+  const ownedExercises = await ExerciseRepository.countOwned(
+    exerciseIds,
+    session.userId,
+  );
   if (ownedExercises !== exerciseIds.length) {
     return { error: "Jedna ili više vežbi nisu deo tvog skupa vežbi." };
   }
 
-  await prisma.$transaction(async (transaction) => {
-    await transaction.trainingBlock.deleteMany({ where: { trainingId } });
-    await transaction.training.update({
-      where: { id: trainingId },
-      data: {
-        title,
-        scheduledFor,
-        blocks: {
-          create: blocks.map((block, position) => ({
-            exerciseId: block.exerciseId,
-            position,
-            sets: block.sets,
-            repetitions: block.repetitions,
-            restSeconds: block.restSeconds,
-            notes: block.notes,
-          })),
-        },
-      },
-    });
+  await TrainingRepository.replaceBlocks(trainingId, {
+    title,
+    scheduledFor,
+    blocks,
   });
 
   revalidatePath("/");
@@ -240,23 +215,13 @@ export async function rateTrainingBlockAction(
     return { error: "Ocena mora biti ceo broj od 1 do 5." };
   }
 
-  const block = await prisma.trainingBlock.findFirst({
-    where: { id: blockId },
-    select: {
-      id: true,
-      trainingId: true,
-      training: { select: { clientId: true } },
-    },
-  });
+  const block = await TrainingBlockRepository.findWithClientId(blockId);
 
-  if (!block || block.training.clientId !== session.userId) {
+  if (!block || block.clientId !== session.userId) {
     return { error: "Vežba nije pronađena ili nemaš dozvolu da je oceniš." };
   }
 
-  await prisma.trainingBlock.update({
-    where: { id: blockId },
-    data: { clientRating: rating },
-  });
+  await TrainingBlockRepository.setRating(blockId, rating);
 
   revalidatePath(`/moji-treninzi/${block.trainingId}`);
   return { success: true, rating };

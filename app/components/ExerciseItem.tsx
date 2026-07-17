@@ -25,6 +25,10 @@ export default function ExerciseItem({ item }: { item: ExerciseDTO }) {
     updateExerciseAction,
     initialState,
   );
+  const [deleteState, deleteAction, deletePending] = useActionState(
+    deleteExerciseAction,
+    initialState,
+  );
 
   const cat = CATEGORY_BY_VALUE[item.category];
 
@@ -124,23 +128,31 @@ export default function ExerciseItem({ item }: { item: ExerciseDTO }) {
         />
       )}
 
-      <div className="mt-4 flex justify-end gap-2">
-        <button
-          type="button"
-          onClick={() => setEditing(true)}
-          className="rounded-lg border border-zinc-300 px-3 py-1.5 text-sm font-medium hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-900"
-        >
-          Izmeni
-        </button>
-        <form action={deleteExerciseAction}>
-          <input type="hidden" name="id" value={item.id} />
+      <div className="mt-4 flex flex-col gap-2">
+        {deleteState.error && (
+          <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600 dark:bg-red-950/50 dark:text-red-400">
+            {deleteState.error}
+          </p>
+        )}
+        <div className="flex justify-end gap-2">
           <button
-            type="submit"
-            className="rounded-lg border border-red-300 px-3 py-1.5 text-sm font-medium text-red-600 hover:bg-red-50 dark:border-red-900 dark:text-red-400 dark:hover:bg-red-950/40"
+            type="button"
+            onClick={() => setEditing(true)}
+            className="rounded-lg border border-zinc-300 px-3 py-1.5 text-sm font-medium hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-900"
           >
-            Obriši
+            Izmeni
           </button>
-        </form>
+          <form action={deleteAction}>
+            <input type="hidden" name="id" value={item.id} />
+            <button
+              type="submit"
+              disabled={deletePending}
+              className="rounded-lg border border-red-300 px-3 py-1.5 text-sm font-medium text-red-600 transition hover:bg-red-50 disabled:opacity-60 dark:border-red-900 dark:text-red-400 dark:hover:bg-red-950/40"
+            >
+              {deletePending ? "Brisanje..." : "Obriši"}
+            </button>
+          </form>
+        </div>
       </div>
     </li>
   );

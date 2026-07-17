@@ -3,8 +3,11 @@
 import bcrypt from "bcryptjs";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
-import { prisma } from "./prisma";
 import { createSession, destroySession, requireSession } from "./session";
+import { TrainerRepository } from "../repositories/TrainerRepository";
+import { ClientRepository } from "../repositories/ClientRepository";
+import { AdminRepository } from "../repositories/AdminRepository";
+import { TrainerRequestRepository } from "../repositories/TrainerRequestRepository";
 
 export type AuthState = { error?: string; info?: string };
 
@@ -36,9 +39,9 @@ export async function registerAction(
 
   // Email mora biti jedinstven u svim tabelama naloga
   const [existingClient, existingTrainer, existingAdmin] = await Promise.all([
-    prisma.client.findUnique({ where: { email } }),
-    prisma.trainer.findUnique({ where: { email } }),
-    prisma.admin.findUnique({ where: { email } }),
+    ClientRepository.findByEmail(email),
+    TrainerRepository.findByEmail(email),
+    AdminRepository.findByEmail(email),
   ]);
   if (existingClient || existingTrainer || existingAdmin) {
     return { error: "Nalog sa ovom email adresom već postoji." };
@@ -48,17 +51,13 @@ export async function registerAction(
 
   if (role === "trainer") {
     // Trener nalog nije odmah aktivan — čeka odobrenje administratora
-    await prisma.trainer.create({
-      data: { name, email, password: hashed },
-    });
+    await TrainerRepository.create({ name, email, password: hashed });
     return {
       info: "Zahtev za nalog trenera je poslat administratoru na odobrenje. Bićeš obavešten kada bude odobren.",
     };
   }
 
-  const client = await prisma.client.create({
-    data: { name, email, password: hashed },
-  });
+  const client = await ClientRepository.create({ name, email, password: hashed });
   await createSession({ userId: client.id, role: "client", name: client.name });
 
   redirect("/");
@@ -77,21 +76,17 @@ export async function loginAction(
     return { error: "Unesi email i lozinku." };
   }
 
-  const admin = await prisma.admin.findUnique({ where: { email } });
-  const client = admin
-    ? null
-    : await prisma.client.findUnique({ where: { email } });
+  const admin = await AdminRepository.findByEmail(email);
+  const client = admin ? null : await ClientRepository.findByEmail(email);
   const trainer =
-    admin || client
-      ? null
-      : await prisma.trainer.findUnique({ where: { email } });
+    admin || client ? null : await TrainerRepository.findByEmail(email);
 
   const account = admin
-    ? { ...admin, role: "admin" as const }
+    ? { id: admin.id, name: admin.name, password: admin.password, role: "admin" as const }
     : client
-      ? { ...client, role: "client" as const }
+      ? { id: client.id, name: client.name, password: client.password, role: "client" as const }
       : trainer
-        ? { ...trainer, role: "trainer" as const }
+        ? { id: trainer.id, name: trainer.name, password: trainer.password, role: "trainer" as const }
         : null;
 
   if (!account) {
@@ -153,9 +148,9 @@ export async function updateProfileAction(
 
   // Email mora ostati jedinstven (u svim tabelama naloga), izuzev sopstvenog naloga
   const [clientWithEmail, trainerWithEmail, adminWithEmail] = await Promise.all([
-    prisma.client.findUnique({ where: { email } }),
-    prisma.trainer.findUnique({ where: { email } }),
-    prisma.admin.findUnique({ where: { email } }),
+    ClientRepository.findByEmail(email),
+    TrainerRepository.findByEmail(email),
+    AdminRepository.findByEmail(email),
   ]);
   const takenByOther =
     (clientWithEmail &&
@@ -168,9 +163,7 @@ export async function updateProfileAction(
     return { error: "Email adresa je već zauzeta." };
   }
 
-  const passwordData = password
-    ? { password: await bcrypt.hash(password, 10) }
-    : {};
+  const hashedPassword = password ? await bcrypt.hash(password, 10) : undefined;
 
   if (session.role === "trainer") {
     const specialty = String(formData.get("specialty") ?? "").trim();
@@ -179,19 +172,25 @@ export async function updateProfileAction(
     if (!Number.isFinite(pricePerSession) || pricePerSession < 0) {
       return { error: "Cena po sesiji mora biti pozitivan broj." };
     }
-    await prisma.trainer.update({
-      where: { id: session.userId },
-      data: { name, email, specialty, city, pricePerSession, ...passwordData },
+    await TrainerRepository.updateProfile(session.userId, {
+      name,
+      email,
+      specialty,
+      city,
+      pricePerSession,
+      password: hashedPassword,
     });
   } else if (session.role === "admin") {
-    await prisma.admin.update({
-      where: { id: session.userId },
-      data: { name, email, ...passwordData },
+    await AdminRepository.updateProfile(session.userId, {
+      name,
+      email,
+      password: hashedPassword,
     });
   } else {
-    await prisma.client.update({
-      where: { id: session.userId },
-      data: { name, email, ...passwordData },
+    await ClientRepository.updateProfile(session.userId, {
+      name,
+      email,
+      password: hashedPassword,
     });
   }
 
@@ -229,32 +228,26 @@ export async function sendTrainerRequestAction(
     return { error: "Poruka može imati najviše 1000 karaktera." };
   }
 
-  const [trainer, existingRequest] = await Promise.all([
-    prisma.trainer.findUnique({ where: { id: trainerId }, select: { id: true } }),
-    prisma.trainerRequest.findFirst({
-      where: {
-        clientId: session.userId,
-        trainerId,
-        status: { in: ["PENDING", "ACCEPTED"] },
-      },
-      select: { status: true },
-      orderBy: { status: "desc" },
-    }),
+  const [trainer, existingStatus] = await Promise.all([
+    TrainerRepository.findById(trainerId),
+    TrainerRequestRepository.findActiveStatusBetween(session.userId, trainerId),
   ]);
 
   if (!trainer) {
     return { error: "Trener više nije dostupan." };
   }
-  if (existingRequest?.status === "ACCEPTED") {
+  if (existingStatus === "ACCEPTED") {
     return { error: "Trener je već prihvatio tvoj zahtev." };
   }
-  if (existingRequest?.status === "PENDING") {
+  if (existingStatus === "PENDING") {
     return { error: "Već imaš zahtev na čekanju kod ovog trenera." };
   }
 
   try {
-    await prisma.trainerRequest.create({
-      data: { clientId: session.userId, trainerId, message },
+    await TrainerRequestRepository.create({
+      clientId: session.userId,
+      trainerId,
+      message,
     });
   } catch {
     return { error: "Zahtev nije poslat. Pokušaj ponovo." };
@@ -275,17 +268,11 @@ export async function respondTrainerRequestAction(formData: FormData) {
   if (!Number.isInteger(requestId) || requestId <= 0) return;
   if (decision !== "ACCEPTED" && decision !== "REJECTED") return;
 
-  await prisma.trainerRequest.updateMany({
-    where: {
-      id: requestId,
-      trainerId: session.userId,
-      status: "PENDING",
-    },
-    data: {
-      status: decision,
-      respondedAt: new Date(),
-    },
-  });
+  await TrainerRequestRepository.respondPending(
+    requestId,
+    session.userId,
+    decision,
+  );
 
   revalidatePath("/");
 }
@@ -300,10 +287,7 @@ export async function deleteTrainerAction(formData: FormData) {
   if (!Number.isInteger(trainerId) || trainerId <= 0) return;
 
   // „Brisanje“ = ban: nalog se deaktivira umesto trajnog brisanja
-  await prisma.trainer.updateMany({
-    where: { id: trainerId },
-    data: { status: "BANNED" },
-  });
+  await TrainerRepository.ban(trainerId);
 
   revalidatePath("/");
 }
@@ -317,10 +301,7 @@ export async function approveTrainerAction(formData: FormData) {
   const trainerId = Number(formData.get("trainerId"));
   if (!Number.isInteger(trainerId) || trainerId <= 0) return;
 
-  await prisma.trainer.updateMany({
-    where: { id: trainerId, status: "PENDING" },
-    data: { status: "ACTIVE" },
-  });
+  await TrainerRepository.approve(trainerId);
 
   revalidatePath("/zahtevi-trenera");
   revalidatePath("/");
@@ -335,10 +316,7 @@ export async function unbanTrainerAction(formData: FormData) {
   const trainerId = Number(formData.get("trainerId"));
   if (!Number.isInteger(trainerId) || trainerId <= 0) return;
 
-  await prisma.trainer.updateMany({
-    where: { id: trainerId, status: "BANNED" },
-    data: { status: "ACTIVE" },
-  });
+  await TrainerRepository.activate(trainerId);
 
   revalidatePath("/banovani-treneri");
   revalidatePath("/");

@@ -1,11 +1,10 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
-import { prisma } from "./prisma";
 import { requireSession } from "./session";
 import { saveVideoFile, deleteVideoFile, UploadError } from "./upload";
-import type { ExerciseCategory } from "../generated/prisma/client";
+import { ExerciseRepository } from "../repositories/ExerciseRepository";
+import type { ExerciseCategory } from "../models/Exercise";
 
 export type ExerciseState = { error?: string; success?: boolean };
 
@@ -56,14 +55,12 @@ export async function createExerciseAction(
     }
   }
 
-  await prisma.exercise.create({
-    data: {
-      name,
-      description,
-      category,
-      videoPath,
-      trainerId: session.userId,
-    },
+  await ExerciseRepository.create({
+    name,
+    description,
+    category,
+    videoPath,
+    trainerId: session.userId,
   });
 
   revalidatePath("/vezbe");
@@ -101,9 +98,7 @@ export async function updateExerciseAction(
   }
 
   // Trenutna vežba (provera vlasništva + stara putanja videa)
-  const existing = await prisma.exercise.findFirst({
-    where: { id, trainerId: session.userId },
-  });
+  const existing = await ExerciseRepository.findOwnedById(id, session.userId);
   if (!existing) {
     return { error: "Vežba nije pronađena ili nemaš dozvolu da je menjaš." };
   }
@@ -119,9 +114,11 @@ export async function updateExerciseAction(
     }
   }
 
-  await prisma.exercise.update({
-    where: { id: existing.id },
-    data: { name, description, category, videoPath: newVideoPath },
+  await ExerciseRepository.update(existing.id, {
+    name,
+    description,
+    category,
+    videoPath: newVideoPath,
   });
 
   // Obriši stari fajl ako je zamenjen novim
@@ -135,23 +132,37 @@ export async function updateExerciseAction(
 
 /**
  * DELETE — brisanje vežbe. Trener može brisati samo svoje vežbe.
+ * Vežba koja se koristi u nekom treningu ne može biti obrisana.
  */
-export async function deleteExerciseAction(formData: FormData) {
+export async function deleteExerciseAction(
+  _prev: ExerciseState,
+  formData: FormData,
+): Promise<ExerciseState> {
   const session = await requireSession();
   if (session.role !== "trainer") {
-    redirect("/vezbe");
+    return { error: "Samo treneri mogu upravljati vežbama." };
   }
 
   const id = Number(formData.get("id"));
-  if (!Number.isInteger(id) || id <= 0) return;
+  if (!Number.isInteger(id) || id <= 0) {
+    return { error: "Nepoznata vežba." };
+  }
 
-  const existing = await prisma.exercise.findFirst({
-    where: { id, trainerId: session.userId },
-  });
-  if (!existing) return;
+  const existing = await ExerciseRepository.findOwnedById(id, session.userId);
+  if (!existing) {
+    return { error: "Vežba nije pronađena ili nemaš dozvolu da je obrišeš." };
+  }
 
-  await prisma.exercise.delete({ where: { id: existing.id } });
+  if (await ExerciseRepository.isUsedInTraining(existing.id)) {
+    return {
+      error:
+        "Ne možeš obrisati vežbu koja se koristi u treninzima. Prvo je ukloni iz tih treninga.",
+    };
+  }
+
+  await ExerciseRepository.delete(existing.id);
   await deleteVideoFile(existing.videoPath);
 
   revalidatePath("/vezbe");
+  return { success: true };
 }

@@ -2,9 +2,9 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { prisma } from "./prisma";
 import { requireSession } from "./session";
-import type { EquipmentType } from "../generated/prisma/client";
+import { EquipmentRepository } from "../repositories/EquipmentRepository";
+import type { EquipmentType } from "../models/Equipment";
 
 export type EquipmentState = { error?: string; success?: boolean };
 
@@ -42,13 +42,11 @@ export async function createEquipmentAction(
     return { error: "Opis može imati najviše 500 karaktera." };
   }
 
-  await prisma.equipment.create({
-    data: {
-      name,
-      description,
-      type,
-      clientId: session.userId,
-    },
+  await EquipmentRepository.create({
+    name,
+    description,
+    type,
+    clientId: session.userId,
   });
 
   revalidatePath("/oprema");
@@ -85,17 +83,12 @@ export async function updateEquipmentAction(
     return { error: "Opis može imati najviše 500 karaktera." };
   }
 
-  const existing = await prisma.equipment.findFirst({
-    where: { id, clientId: session.userId },
-  });
+  const existing = await EquipmentRepository.findOwnedById(id, session.userId);
   if (!existing) {
     return { error: "Oprema nije pronađena ili nemaš dozvolu da je menjaš." };
   }
 
-  await prisma.equipment.update({
-    where: { id: existing.id },
-    data: { name, description, type },
-  });
+  await EquipmentRepository.update(existing.id, { name, description, type });
 
   revalidatePath("/oprema");
   return { success: true };
@@ -113,12 +106,10 @@ export async function deleteEquipmentAction(formData: FormData) {
   const id = Number(formData.get("id"));
   if (!Number.isInteger(id) || id <= 0) return;
 
-  const existing = await prisma.equipment.findFirst({
-    where: { id, clientId: session.userId },
-  });
+  const existing = await EquipmentRepository.findOwnedById(id, session.userId);
   if (!existing) return;
 
-  await prisma.equipment.delete({ where: { id: existing.id } });
+  await EquipmentRepository.delete(existing.id);
 
   revalidatePath("/oprema");
 }
