@@ -19,13 +19,21 @@ export default async function AuthNav() {
   return (
     <>
       {session.role === "client" && (
-        <Link
-          href="/moji-treneri"
-          className="text-sm font-medium text-zinc-700 transition hover:text-indigo-600 dark:text-zinc-300 dark:hover:text-indigo-400"
-        >
-          Moji treneri
-        </Link>
-      )}
+  <>
+    <Link
+      href="/moji-treneri"
+      className="text-sm font-medium text-zinc-700 transition hover:text-indigo-600 dark:text-zinc-300 dark:hover:text-indigo-400"
+    >
+      Moji treneri
+    </Link>
+    <Link
+      href="/oprema"
+      className="text-sm font-medium text-zinc-700 transition hover:text-indigo-600 dark:text-zinc-300 dark:hover:text-indigo-400"
+    >
+      Moja oprema
+    </Link>
+  </>
+)}
       {session.role === "trainer" && (
         <Link
           href="/vezbe"
