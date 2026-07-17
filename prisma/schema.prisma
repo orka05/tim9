@@ -41,14 +41,15 @@ model Trainer {
 }
 
 model Client {
-  id        Int              @id @default(autoincrement())
-  name      String
-  email     String           @unique
-  password  String
-  createdAt DateTime         @default(now())
-  requests  TrainerRequest[]
-  trainings Training[]
-  equipment Equipment[]
+  id              Int               @id @default(autoincrement())
+  name            String
+  email           String            @unique
+  password        String
+  createdAt       DateTime          @default(now())
+  requests        TrainerRequest[]
+  trainings       Training[]
+  ownedEquipment  ClientEquipment[]
+  customEquipment Equipment[]       @relation("CustomEquipment")
 }
 
 model Admin {
@@ -134,19 +135,34 @@ enum EquipmentType {
   REKVIZIT
 }
 
-// Oprema koju klijent poseduje (sprave za vežbanje i rekviziti).
-// Namerno jedna tabela sa diskriminatorom `type`, po istom obrascu
-// koji već koristi Exercise.category — dva tipa dele isti skup polja
-// i istu CRUD logiku, pa odvajanje u dve tabele ne bi donelo korist.
+// Katalog opreme. `isBase = true` su stavke koje kreira admin i dostupne su svim
+// klijentima da ih označe kao svoje. `isBase = false` su custom stavke koje pravi
+// klijent (`createdById`) i vidljive su samo njemu. Vlasništvo (koju opremu
+// klijent poseduje) modeluje se spojnom tabelom `ClientEquipment`.
 model Equipment {
-  id          Int           @id @default(autoincrement())
+  id          Int               @id @default(autoincrement())
   name        String
-  description String        @default("") @db.VarChar(500)
-  type        EquipmentType @default(SPRAVA)
-  clientId    Int
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
-  client      Client        @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  description String            @default("") @db.VarChar(500)
+  type        EquipmentType     @default(SPRAVA)
+  isBase      Boolean           @default(false)
+  createdById Int?
+  createdBy   Client?           @relation("CustomEquipment", fields: [createdById], references: [id], onDelete: Cascade)
+  owners      ClientEquipment[]
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
 
-  @@index([clientId, createdAt])
+  @@index([isBase, name])
+  @@index([createdById])
+}
+
+// Spona „klijent poseduje opremu" (bazna ili sopstvena custom).
+model ClientEquipment {
+  clientId    Int
+  equipmentId Int
+  createdAt   DateTime  @default(now())
+  client      Client    @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  equipment   Equipment @relation(fields: [equipmentId], references: [id], onDelete: Cascade)
+
+  @@id([clientId, equipmentId])
+  @@index([clientId])
 }

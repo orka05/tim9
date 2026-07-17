@@ -56,6 +56,12 @@ export default async function AuthNav() {
           >
             Banovani
           </Link>
+          <Link
+            href="/oprema-katalog"
+            className="text-sm font-medium text-zinc-700 transition hover:text-indigo-600 dark:text-zinc-300 dark:hover:text-indigo-400"
+          >
+            Katalog opreme
+          </Link>
         </>
       )}
       <Link
