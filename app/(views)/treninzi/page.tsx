@@ -158,7 +158,7 @@ export default async function TreninziPage({
                     </p>
                     {training.trainingComment && (
                       <p className="mt-1 text-sm text-zinc-700 dark:text-zinc-300">
-                        „{training.trainingComment}"
+                        „{training.trainingComment}”
                       </p>
                     )}
                   </div>
