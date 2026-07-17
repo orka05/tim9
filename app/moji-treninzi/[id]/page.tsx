@@ -4,6 +4,7 @@ import AuthNav from "../../components/AuthNav";
 import Logo from "../../components/Logo";
 import ThemeToggle from "../../components/ThemeToggle";
 import ExerciseVideoModal from "../../components/ExerciseVideoModal";
+import ExerciseRating from "../../components/ExcerciseRating";
 import { prisma } from "../../lib/prisma";
 import { requireSession } from "../../lib/session";
 
@@ -121,6 +122,10 @@ export default async function TreningDetaljiPage({
                       exerciseName={block.exercise.name}
                     />
                   )}
+                  <ExerciseRating
+                    blockId={block.id}
+                    initialRating={block.clientRating}
+                  />
                 </div>
                 <p className="rounded-lg bg-zinc-50 px-4 py-3 text-sm text-zinc-600 dark:bg-zinc-900 dark:text-zinc-400 sm:text-right">
                   <span className="font-bold text-zinc-900 dark:text-zinc-100">
