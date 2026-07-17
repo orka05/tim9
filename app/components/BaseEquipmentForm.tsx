@@ -3,15 +3,16 @@
 import { useActionState, useRef } from "react";
 import EquipmentTypeSelect from "./EquipmentTypeSelect";
 import {
-  createCustomEquipmentAction,
+  createBaseEquipmentAction,
   type EquipmentState,
 } from "../lib/equipmentActions";
 
 const initialState: EquipmentState = {};
 
-export default function EquipmentForm() {
+/** Forma za admin dodavanje bazne opreme u katalog. */
+export default function BaseEquipmentForm() {
   const [state, formAction, pending] = useActionState(
-    createCustomEquipmentAction,
+    createBaseEquipmentAction,
     initialState,
   );
   const formRef = useRef<HTMLFormElement>(null);
@@ -25,31 +26,31 @@ export default function EquipmentForm() {
       }}
       className="flex flex-col gap-5 rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-800 dark:bg-zinc-950"
     >
-      <h2 className="text-lg font-semibold">Dodaj svoju opremu</h2>
+      <h2 className="text-lg font-semibold">Dodaj baznu opremu</h2>
       <p className="-mt-3 text-sm text-zinc-500">
-        Napravi custom opremu koju samo ti vidiš.
+        Stavke iz kataloga vide svi klijenti i mogu ih označiti kao svoje.
       </p>
 
       <div className="flex flex-col gap-1.5">
-        <label htmlFor="eq-name" className="text-sm font-medium">
+        <label htmlFor="base-name" className="text-sm font-medium">
           Naziv
         </label>
         <input
-          id="eq-name"
+          id="base-name"
           name="name"
           required
           maxLength={100}
-          placeholder="npr. Bučice 10kg"
+          placeholder="npr. Guma za istezanje"
           className="rounded-lg border border-zinc-300 bg-white px-3 py-2.5 text-sm outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 dark:border-zinc-700 dark:bg-zinc-900"
         />
       </div>
 
       <div className="flex flex-col gap-1.5">
-        <label htmlFor="eq-description" className="text-sm font-medium">
+        <label htmlFor="base-description" className="text-sm font-medium">
           Opis (opciono)
         </label>
         <textarea
-          id="eq-description"
+          id="base-description"
           name="description"
           maxLength={500}
           rows={3}
@@ -67,7 +68,7 @@ export default function EquipmentForm() {
       )}
       {state.success && (
         <p className="rounded-lg bg-green-50 px-3 py-2 text-sm text-green-700 dark:bg-green-950/50 dark:text-green-400">
-          Oprema je dodata u tvoju listu.
+          Bazna oprema je dodata u katalog.
         </p>
       )}
 
@@ -76,7 +77,7 @@ export default function EquipmentForm() {
         disabled={pending}
         className="self-start rounded-lg bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-indigo-700 disabled:opacity-60"
       >
-        {pending ? "Dodavanje..." : "Dodaj opremu"}
+        {pending ? "Dodavanje..." : "Dodaj u katalog"}
       </button>
     </form>
   );

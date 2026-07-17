@@ -176,6 +176,16 @@ async function TrainerHome({ trainerId }: { trainerId: number }) {
                   <div>
                     <h2 className="text-lg font-bold">{request.clientName}</h2>
                     <p className="text-sm text-zinc-500">{request.clientEmail}</p>
+                    {request.status !== "REJECTED" && (
+                      <a
+                        href={`/oprema-klijenta/${request.clientId}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="mt-1 inline-block text-sm font-medium text-indigo-600 hover:underline dark:text-indigo-400"
+                      >
+                        Vidi opremu klijenta ↗
+                      </a>
+                    )}
                   </div>
                   <span
                     className={`rounded-full px-3 py-1 text-xs font-semibold ${statusClass[request.status]}`}

@@ -30,6 +30,20 @@ const clients = [
 
 const admins = [{ name: "Administrator", email: "admin@gmail.com" }];
 
+// Bazna oprema (katalog koji kreira admin) — klijenti je označavaju kao svoju.
+const baseEquipment: {
+  name: string;
+  description: string;
+  type: "SPRAVA" | "REKVIZIT";
+}[] = [
+  { name: "Guma za istezanje", description: "Elastična guma za trening otpora.", type: "REKVIZIT" },
+  { name: "Teg 5kg", description: "Ručni teg od 5 kilograma.", type: "REKVIZIT" },
+  { name: "Bučice 10kg", description: "Par bučica od 10 kilograma.", type: "REKVIZIT" },
+  { name: "Prostirka za jogu", description: "Podloga za vežbanje i istezanje.", type: "REKVIZIT" },
+  { name: "Klupa za vežbanje", description: "Podesiva klupa za vežbe sa tegovima.", type: "SPRAVA" },
+  { name: "Traka za trčanje", description: "Traka za kardio trening.", type: "SPRAVA" },
+];
+
 async function main() {
   const password = await bcrypt.hash("trener123", 10);
 
@@ -58,8 +72,21 @@ async function main() {
     });
   }
 
+  // Bazna oprema — idempotentno (naziv nije unique, pa proveravamo postojanje).
+  for (const e of baseEquipment) {
+    const existing = await prisma.equipment.findFirst({
+      where: { name: e.name, isBase: true },
+      select: { id: true },
+    });
+    if (!existing) {
+      await prisma.equipment.create({
+        data: { ...e, isBase: true, createdById: null },
+      });
+    }
+  }
+
   console.log(
-    `Seed gotov: ${trainers.length} trenera, ${clients.length} klijenata, ${admins.length} admin (lozinka trenera/klijenata: "trener123", admin: "admin123").`,
+    `Seed gotov: ${trainers.length} trenera, ${clients.length} klijenata, ${admins.length} admin, ${baseEquipment.length} baznih oprema (lozinka trenera/klijenata: "trener123", admin: "admin123").`,
   );
 }
 
