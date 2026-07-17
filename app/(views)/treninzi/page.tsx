@@ -151,6 +151,19 @@ export default async function TreninziPage({
                   </div>
                 </div>
 
+                {training.trainingRating != null && (
+                  <div className="border-b border-zinc-200 bg-amber-50/50 px-5 py-3 dark:border-zinc-800 dark:bg-amber-950/10 sm:px-6">
+                    <p className="text-sm font-semibold text-amber-600 dark:text-amber-400">
+                      Ocena klijenta za trening: ★ {training.trainingRating}/10
+                    </p>
+                    {training.trainingComment && (
+                      <p className="mt-1 text-sm text-zinc-700 dark:text-zinc-300">
+                        „{training.trainingComment}"
+                      </p>
+                    )}
+                  </div>
+                )}
+
                 <ol className="divide-y divide-zinc-100 dark:divide-zinc-900">
                   {training.blocks.map((block, index) => (
                     <li

@@ -134,6 +134,7 @@ export class TrainingRepository {
         scheduledFor: true,
         clientId: true,
         trainingRating: true,
+        trainingComment: true,
         client: { select: { name: true, email: true } },
         blocks: {
           orderBy: { position: "asc" },
@@ -207,6 +208,7 @@ export type TrainerTrainingSummary = {
   scheduledFor: Date;
   clientId: number;
   trainingRating: number | null;
+  trainingComment: string | null;
   client: { name: string; email: string };
   blocks: {
     id: number;
