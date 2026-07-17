@@ -1,10 +1,12 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { requireSession } from "./session";
 import { TrainingRepository } from "../repositories/TrainingRepository";
 import { TrainingBlockRepository } from "../repositories/TrainingBlockRepository";
 import { TrainerRequestRepository } from "../repositories/TrainerRequestRepository";
+import { TrainerReviewRepository } from "../repositories/TrainerReviewRepository";
 import { ExerciseRepository } from "../repositories/ExerciseRepository";
 
 export type TrainingState = {
@@ -182,6 +184,36 @@ export async function updateTrainingAction(
   return { success: true, trainingId };
 }
 
+/**
+ * DELETE — trener briše svoj trening (npr. ako je napravljen greškom).
+ * Blokovi se brišu kroz kaskadu; nakon brisanja vraća na listu treninga.
+ */
+export async function deleteTrainingAction(formData: FormData) {
+  const session = await requireSession();
+  if (session.role !== "trainer") redirect("/");
+
+  const trainingId = Number(formData.get("trainingId"));
+  const clientId = Number(formData.get("clientId"));
+
+  if (Number.isInteger(trainingId) && trainingId > 0) {
+    const training = await TrainingRepository.findOwnedSummary(
+      trainingId,
+      session.userId,
+    );
+    if (training) {
+      await TrainingRepository.deleteOwned(trainingId, session.userId);
+      revalidatePath("/");
+      revalidatePath("/treninzi");
+    }
+  }
+
+  redirect(
+    Number.isInteger(clientId) && clientId > 0
+      ? `/treninzi?clientId=${clientId}`
+      : "/treninzi",
+  );
+}
+
 export type RatingState = {
   error?: string;
   success?: boolean;
@@ -250,6 +282,7 @@ export async function rateTrainingAction(
 
   const trainingId = Number(formData.get("trainingId"));
   const rating = Number(formData.get("rating"));
+  const comment = String(formData.get("comment") ?? "").trim();
 
   if (!Number.isInteger(trainingId) || trainingId <= 0) {
     return { error: "Trening nije ispravno izabran." };
@@ -257,11 +290,15 @@ export async function rateTrainingAction(
   if (!isValidTrainingRating(rating)) {
     return { error: "Ocena mora biti ceo broj od 1 do 10." };
   }
+  if (comment.length > 500) {
+    return { error: "Komentar može imati najviše 500 karaktera." };
+  }
 
   const saved = await TrainingRepository.setClientTrainingRating(
     trainingId,
     session.userId,
     rating,
+    comment || null,
   );
   if (!saved) {
     return { error: "Trening nije pronađen ili nemaš dozvolu da ga oceniš." };
@@ -286,6 +323,7 @@ export async function rateTrainerAction(
 
   const trainingId = Number(formData.get("trainingId"));
   const rating = Number(formData.get("rating"));
+  const comment = String(formData.get("comment") ?? "").trim();
 
   if (!Number.isInteger(trainingId) || trainingId <= 0) {
     return { error: "Trening nije ispravno izabran." };
@@ -293,11 +331,15 @@ export async function rateTrainerAction(
   if (!isValidTrainingRating(rating)) {
     return { error: "Ocena mora biti ceo broj od 1 do 10." };
   }
+  if (comment.length > 500) {
+    return { error: "Komentar može imati najviše 500 karaktera." };
+  }
 
-  const saved = await TrainingRepository.setClientTrainerRating(
+  const saved = await TrainerReviewRepository.rateViaTraining(
     trainingId,
     session.userId,
     rating,
+    comment || null,
   );
   if (!saved) {
     return { error: "Trening nije pronađen ili nemaš dozvolu da oceniš trenera." };

@@ -12,8 +12,11 @@ type ProfileData = {
   role: "client" | "trainer" | "admin";
   specialty?: string;
   city?: string;
-  pricePerSession?: number;
+  pricePerMonth?: number;
   rating?: number;
+  height?: number | null;
+  weight?: number | null;
+  age?: number | null;
 };
 
 const inputClass =
@@ -108,15 +111,15 @@ export default function ProfileForm({ data }: { data: ProfileData }) {
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <label htmlFor="pricePerSession" className="text-sm font-medium">
-              Cena po sesiji (RSD)
+            <label htmlFor="pricePerMonth" className="text-sm font-medium">
+              Mesečna cena (RSD)
             </label>
             <input
-              id="pricePerSession"
-              name="pricePerSession"
+              id="pricePerMonth"
+              name="pricePerMonth"
               type="number"
               min={0}
-              defaultValue={data.pricePerSession ?? 0}
+              defaultValue={data.pricePerMonth ?? 0}
               className={inputClass}
             />
           </div>
@@ -137,6 +140,80 @@ export default function ProfileForm({ data }: { data: ProfileData }) {
               className={readonlyClass}
             />
           </div>
+        </>
+      )}
+
+      {data.role === "client" && (
+        <>
+          <div className="flex flex-col gap-1.5">
+            <label htmlFor="clientRating" className="text-sm font-medium">
+              Tvoja ocena kao klijent{" "}
+              <span className="font-normal text-zinc-400">
+                (dodeljuju treneri)
+              </span>
+            </label>
+            <input
+              id="clientRating"
+              type="text"
+              value={
+                (data.rating ?? 0) > 0
+                  ? (data.rating ?? 0).toFixed(1)
+                  : "Još nema ocena"
+              }
+              disabled
+              className={readonlyClass}
+            />
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-3">
+          <div className="flex flex-col gap-1.5">
+            <label htmlFor="height" className="text-sm font-medium">
+              Visina (cm)
+            </label>
+            <input
+              id="height"
+              name="height"
+              type="number"
+              min={50}
+              max={300}
+              placeholder="npr. 180"
+              defaultValue={data.height ?? ""}
+              className={inputClass}
+            />
+          </div>
+
+          <div className="flex flex-col gap-1.5">
+            <label htmlFor="weight" className="text-sm font-medium">
+              Težina (kg)
+            </label>
+            <input
+              id="weight"
+              name="weight"
+              type="number"
+              min={20}
+              max={500}
+              placeholder="npr. 78"
+              defaultValue={data.weight ?? ""}
+              className={inputClass}
+            />
+          </div>
+
+          <div className="flex flex-col gap-1.5">
+            <label htmlFor="age" className="text-sm font-medium">
+              Godine
+            </label>
+            <input
+              id="age"
+              name="age"
+              type="number"
+              min={5}
+              max={120}
+              placeholder="npr. 27"
+              defaultValue={data.age ?? ""}
+              className={inputClass}
+            />
+          </div>
+        </div>
         </>
       )}
 

@@ -154,7 +154,7 @@ public/uploads/     # Otpremljeni video prilozi (van sistema za verzionisanje)
 Relacioni model obuhvata sledeće entitete:
 
 - **Client** — nalog klijenta (ime, jedinstvena e-adresa, heširana lozinka).
-- **Trainer** — nalog i profil trenera (specijalnost, grad, cena po treningu, ocena).
+- **Trainer** — nalog i profil trenera (specijalnost, grad, mesečna cena, ocena).
 - **TrainerRequest** — zahtev klijenta upućen treneru, sa statusom
   (`PENDING`, `ACCEPTED`, `REJECTED`) i porukom; povezan relacijama sa entitetima
   Client i Trainer.

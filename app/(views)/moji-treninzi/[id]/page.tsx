@@ -83,7 +83,9 @@ export default async function TreningDetaljiPage({
           <TrainingRatings
             trainingId={training.id}
             initialTrainingRating={training.trainingRating}
+            initialTrainingComment={training.trainingComment}
             initialTrainerRating={training.trainerRating}
+            initialTrainerComment={training.trainerComment}
           />
         </section>
 
