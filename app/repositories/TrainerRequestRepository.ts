@@ -10,6 +10,7 @@ export type TrainerRequestWithClient = {
   clientId: number;
   clientName: string;
   clientEmail: string;
+  clientRating: number;
 };
 
 type TrainerRequestCreateInput = {
@@ -52,7 +53,7 @@ export class TrainerRequestRepository {
   ): Promise<TrainerRequestWithClient[]> {
     const rows = await prisma.trainerRequest.findMany({
       where: { trainerId },
-      include: { client: { select: { name: true, email: true } } },
+      include: { client: { select: { name: true, email: true, rating: true } } },
       orderBy: [{ status: "asc" }, { createdAt: "desc" }],
     });
     return rows.map((row) => ({
@@ -63,6 +64,7 @@ export class TrainerRequestRepository {
       clientId: row.clientId,
       clientName: row.client.name,
       clientEmail: row.client.email,
+      clientRating: row.client.rating,
     }));
   }
 

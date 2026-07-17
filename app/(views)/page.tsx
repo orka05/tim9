@@ -183,6 +183,11 @@ async function TrainerHome({ trainerId }: { trainerId: number }) {
                   <div className="min-w-0">
                     <h2 className="text-lg font-bold">{request.clientName}</h2>
                     <p className="text-sm text-zinc-500">{request.clientEmail}</p>
+                    <p className="mt-1 text-sm font-semibold text-amber-500">
+                      {request.clientRating > 0
+                        ? `★ ${request.clientRating.toFixed(1)} — ocena klijenta`
+                        : "Klijent još nema ocenu"}
+                    </p>
                     {request.status !== "REJECTED" && (
                       <a
                         href={`/oprema-klijenta/${request.clientId}`}
