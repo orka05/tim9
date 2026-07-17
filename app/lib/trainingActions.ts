@@ -182,14 +182,22 @@ export async function updateTrainingAction(
   return { success: true, trainingId };
 }
 
-export type RateExerciseState = {
+export type RatingState = {
   error?: string;
   success?: boolean;
   rating?: number;
 };
 
-function isValidRating(value: unknown) {
+export type RateExerciseState = RatingState;
+export type RateTrainingState = RatingState;
+export type RateTrainerState = RatingState;
+
+function isValidExerciseRating(value: unknown) {
   return Number.isInteger(value) && Number(value) >= 1 && Number(value) <= 5;
+}
+
+function isValidTrainingRating(value: unknown) {
+  return Number.isInteger(value) && Number(value) >= 1 && Number(value) <= 10;
 }
 
 /**
@@ -211,7 +219,7 @@ export async function rateTrainingBlockAction(
   if (!Number.isInteger(blockId) || blockId <= 0) {
     return { error: "Vežba nije ispravno izabrana." };
   }
-  if (!isValidRating(rating)) {
+  if (!isValidExerciseRating(rating)) {
     return { error: "Ocena mora biti ceo broj od 1 do 5." };
   }
 
@@ -224,5 +232,80 @@ export async function rateTrainingBlockAction(
   await TrainingBlockRepository.setRating(blockId, rating);
 
   revalidatePath(`/moji-treninzi/${block.trainingId}`);
+  return { success: true, rating };
+}
+
+/**
+ * Klijent ocenjuje ceo trening koji mu je dodeljen.
+ * Ocena je broj od 1 do 10.
+ */
+export async function rateTrainingAction(
+  _prev: RateTrainingState,
+  formData: FormData,
+): Promise<RateTrainingState> {
+  const session = await requireSession();
+  if (session.role !== "client") {
+    return { error: "Samo klijent može oceniti trening." };
+  }
+
+  const trainingId = Number(formData.get("trainingId"));
+  const rating = Number(formData.get("rating"));
+
+  if (!Number.isInteger(trainingId) || trainingId <= 0) {
+    return { error: "Trening nije ispravno izabran." };
+  }
+  if (!isValidTrainingRating(rating)) {
+    return { error: "Ocena mora biti ceo broj od 1 do 10." };
+  }
+
+  const saved = await TrainingRepository.setClientTrainingRating(
+    trainingId,
+    session.userId,
+    rating,
+  );
+  if (!saved) {
+    return { error: "Trening nije pronađen ili nemaš dozvolu da ga oceniš." };
+  }
+
+  revalidatePath(`/moji-treninzi/${trainingId}`);
+  return { success: true, rating };
+}
+
+/**
+ * Klijent ocenjuje trenera u kontekstu konkretnog svog treninga.
+ * Prosečna ocena trenera se ažurira u istoj transakciji sa upisom ocene.
+ */
+export async function rateTrainerAction(
+  _prev: RateTrainerState,
+  formData: FormData,
+): Promise<RateTrainerState> {
+  const session = await requireSession();
+  if (session.role !== "client") {
+    return { error: "Samo klijent može oceniti trenera." };
+  }
+
+  const trainingId = Number(formData.get("trainingId"));
+  const rating = Number(formData.get("rating"));
+
+  if (!Number.isInteger(trainingId) || trainingId <= 0) {
+    return { error: "Trening nije ispravno izabran." };
+  }
+  if (!isValidTrainingRating(rating)) {
+    return { error: "Ocena mora biti ceo broj od 1 do 10." };
+  }
+
+  const saved = await TrainingRepository.setClientTrainerRating(
+    trainingId,
+    session.userId,
+    rating,
+  );
+  if (!saved) {
+    return { error: "Trening nije pronađen ili nemaš dozvolu da oceniš trenera." };
+  }
+
+  revalidatePath(`/moji-treninzi/${trainingId}`);
+  revalidatePath("/moji-treneri");
+  revalidatePath("/trainers");
+  revalidatePath("/");
   return { success: true, rating };
 }

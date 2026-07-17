@@ -5,6 +5,7 @@ import Logo from "@/app/components/Logo";
 import ThemeToggle from "@/app/components/ThemeToggle";
 import ExerciseVideoModal from "@/app/components/ExerciseVideoModal";
 import ExerciseRating from "@/app/components/ExcerciseRating";
+import TrainingRatings from "@/app/components/TrainingRatings";
 import { requireSession } from "@/app/lib/session";
 import { MyTrainingDetailViewModel } from "@/app/viewmodels/MyTrainingDetailViewModel";
 
@@ -79,6 +80,11 @@ export default async function TreningDetaljiPage({
               })}
             </time>
           </div>
+          <TrainingRatings
+            trainingId={training.id}
+            initialTrainingRating={training.trainingRating}
+            initialTrainerRating={training.trainerRating}
+          />
         </section>
 
         <h2 className="mt-8 text-2xl font-bold">Vežbe</h2>

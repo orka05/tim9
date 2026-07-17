@@ -76,6 +76,52 @@ export class TrainingRepository {
     });
   }
 
+  static async setClientTrainingRating(
+    trainingId: number,
+    clientId: number,
+    rating: number,
+  ): Promise<boolean> {
+    const result = await prisma.training.updateMany({
+      where: { id: trainingId, clientId },
+      data: { trainingRating: rating },
+    });
+    return result.count === 1;
+  }
+
+  static async setClientTrainerRating(
+    trainingId: number,
+    clientId: number,
+    rating: number,
+  ): Promise<boolean> {
+    return prisma.$transaction(async (transaction) => {
+      const training = await transaction.training.findFirst({
+        where: { id: trainingId, clientId },
+        select: { id: true, trainerId: true },
+      });
+      if (!training) return false;
+
+      await transaction.training.update({
+        where: { id: training.id },
+        data: { trainerRating: rating },
+      });
+
+      const aggregate = await transaction.training.aggregate({
+        where: {
+          trainerId: training.trainerId,
+          trainerRating: { not: null },
+        },
+        _avg: { trainerRating: true },
+      });
+
+      await transaction.trainer.update({
+        where: { id: training.trainerId },
+        data: { rating: aggregate._avg.trainerRating ?? 1.0 },
+      });
+
+      return true;
+    });
+  }
+
   static async findClientTrainingDetail(
     id: number,
     clientId: number,
@@ -86,6 +132,8 @@ export class TrainingRepository {
         id: true,
         title: true,
         scheduledFor: true,
+        trainingRating: true,
+        trainerRating: true,
         trainer: { select: { name: true, specialty: true, email: true } },
         blocks: {
           orderBy: { position: "asc" },
@@ -116,6 +164,8 @@ export class TrainingRepository {
         id: true,
         title: true,
         scheduledFor: true,
+        trainingRating: true,
+        trainerRating: true,
         client: { select: { name: true, email: true } },
         blocks: {
           orderBy: { position: "asc" },
@@ -163,6 +213,8 @@ export type ClientTrainingDetail = {
   id: number;
   title: string;
   scheduledFor: Date;
+  trainingRating: number | null;
+  trainerRating: number | null;
   trainer: { name: string; specialty: string; email: string };
   blocks: {
     id: number;
@@ -179,6 +231,8 @@ export type TrainerTrainingSummary = {
   id: number;
   title: string;
   scheduledFor: Date;
+  trainingRating: number | null;
+  trainerRating: number | null;
   client: { name: string; email: string };
   blocks: {
     id: number;
