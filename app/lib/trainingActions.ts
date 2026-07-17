@@ -206,3 +206,58 @@ export async function updateTrainingAction(
   revalidatePath(`/moji-treninzi/${trainingId}`);
   return { success: true, trainingId };
 }
+
+export type RateExerciseState = {
+  error?: string;
+  success?: boolean;
+  rating?: number;
+};
+
+function isValidRating(value: unknown) {
+  return Number.isInteger(value) && Number(value) >= 1 && Number(value) <= 5;
+}
+
+/**
+ * Klijent ocenjuje pojedinačnu vežbu (TrainingBlock) u okviru svog treninga.
+ * Ocena je broj od 1 do 5.
+ */
+export async function rateTrainingBlockAction(
+  _prev: RateExerciseState,
+  formData: FormData,
+): Promise<RateExerciseState> {
+  const session = await requireSession();
+  if (session.role !== "client") {
+    return { error: "Samo klijent može oceniti vežbu." };
+  }
+
+  const blockId = Number(formData.get("blockId"));
+  const rating = Number(formData.get("rating"));
+
+  if (!Number.isInteger(blockId) || blockId <= 0) {
+    return { error: "Vežba nije ispravno izabrana." };
+  }
+  if (!isValidRating(rating)) {
+    return { error: "Ocena mora biti ceo broj od 1 do 5." };
+  }
+
+  const block = await prisma.trainingBlock.findFirst({
+    where: { id: blockId },
+    select: {
+      id: true,
+      trainingId: true,
+      training: { select: { clientId: true } },
+    },
+  });
+
+  if (!block || block.training.clientId !== session.userId) {
+    return { error: "Vežba nije pronađena ili nemaš dozvolu da je oceniš." };
+  }
+
+  await prisma.trainingBlock.update({
+    where: { id: blockId },
+    data: { clientRating: rating },
+  });
+
+  revalidatePath(`/moji-treninzi/${block.trainingId}`);
+  return { success: true, rating };
+}

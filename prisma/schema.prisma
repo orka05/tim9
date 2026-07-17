@@ -119,6 +119,7 @@ model TrainingBlock {
   repetitions Int
   restSeconds Int
   notes       String   @default("") @db.VarChar(500)
+  clientRating Int?
   training    Training @relation(fields: [trainingId], references: [id], onDelete: Cascade)
   exercise    Exercise @relation(fields: [exerciseId], references: [id], onDelete: Restrict)
 
