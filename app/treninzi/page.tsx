@@ -178,6 +178,20 @@ export default async function TreninziPage({
                             {block.notes}
                           </p>
                         )}
+                        {block.clientRating != null ? (
+                          <p className="mt-1 text-sm font-medium text-amber-500">
+                            Ocena klijenta:{" "}
+                            {"★".repeat(block.clientRating)}
+                            {"☆".repeat(5 - block.clientRating)}{" "}
+                            <span className="text-zinc-400">
+                              ({block.clientRating}/5)
+                            </span>
+                          </p>
+                        ) : (
+                          <p className="mt-1 text-sm text-zinc-400">
+                            Klijent još nije ocenio ovu vežbu
+                          </p>
+                        )}
                       </div>
                       <p className="text-sm text-zinc-600 dark:text-zinc-400 sm:text-right">
                         <span className="font-semibold text-zinc-900 dark:text-zinc-100">
