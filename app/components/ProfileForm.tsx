@@ -9,7 +9,6 @@ type ProfileData = {
   id: number;
   name: string;
   email: string;
-  createdAt: string;
   role: "client" | "trainer" | "admin";
   specialty?: string;
   city?: string;
