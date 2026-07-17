@@ -1,22 +1,26 @@
+import { User } from "./User";
+
 export type TrainerStatus = "PENDING" | "ACTIVE" | "BANNED";
 
 /**
  * Domenski entitet Trenera (Model sloj).
- * Sadrži atribute i poslovnu/prezentacionu logiku vezanu za trenera,
- * nezavisno od načina čuvanja u bazi (to je posao repozitorijuma).
+ * Nasleđuje zajedničke atribute iz apstraktne klase `User`, a dodaje
+ * poslovnu/prezentacionu logiku i atribute specifične za trenera.
  */
-export class Trainer {
+export class Trainer extends User {
   constructor(
-    public readonly id: number,
-    public name: string,
-    public email: string,
-    public password: string,
+    id: number,
+    name: string,
+    email: string,
+    password: string,
     public specialty: string,
     public city: string,
     public pricePerMonth: number,
     public rating: number,
     public status: TrainerStatus,
-  ) {}
+  ) {
+    super(id, name, email, password);
+  }
 
   isActive(): boolean {
     return this.status === "ACTIVE";

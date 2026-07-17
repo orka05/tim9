@@ -1,5 +1,7 @@
 import "server-only";
 import { prisma } from "../lib/prisma";
+import { Training } from "../models/Training";
+import { TrainingBlock } from "../models/TrainingBlock";
 
 export type TrainingBlockInput = {
   exerciseId: number;
@@ -93,7 +95,7 @@ export class TrainingRepository {
     id: number,
     clientId: number,
   ): Promise<ClientTrainingDetail | null> {
-    return prisma.training.findFirst({
+    const row = await prisma.training.findFirst({
       where: { id, clientId },
       select: {
         id: true,
@@ -107,6 +109,8 @@ export class TrainingRepository {
           orderBy: { position: "asc" },
           select: {
             id: true,
+            exerciseId: true,
+            position: true,
             sets: true,
             repetitions: true,
             restSeconds: true,
@@ -119,13 +123,44 @@ export class TrainingRepository {
         },
       },
     });
+    if (!row) return null;
+    return {
+      training: new Training(
+        row.id,
+        row.title,
+        row.scheduledFor,
+        row.trainerId,
+        clientId,
+      ),
+      trainingRating: row.trainingRating,
+      trainingComment: row.trainingComment,
+      trainer: row.trainer,
+      blocks: row.blocks.map((block) => ({
+        block: new TrainingBlock(
+          block.id,
+          row.id,
+          block.exerciseId,
+          block.position,
+          block.sets,
+          block.repetitions,
+          block.restSeconds,
+          block.notes,
+          block.clientRating,
+        ),
+        exercise: {
+          name: block.exercise.name,
+          description: block.exercise.description,
+          videoPath: block.exercise.videoPath,
+        },
+      })),
+    };
   }
 
   static async findTrainerTrainings(
     trainerId: number,
     clientId?: number,
   ): Promise<TrainerTrainingSummary[]> {
-    return prisma.training.findMany({
+    const rows = await prisma.training.findMany({
       where: { trainerId, ...(clientId ? { clientId } : {}) },
       orderBy: [{ scheduledFor: "desc" }, { createdAt: "desc" }],
       select: {
@@ -140,6 +175,8 @@ export class TrainingRepository {
           orderBy: { position: "asc" },
           select: {
             id: true,
+            exerciseId: true,
+            position: true,
             sets: true,
             repetitions: true,
             restSeconds: true,
@@ -150,13 +187,39 @@ export class TrainingRepository {
         },
       },
     });
+    return rows.map((row) => ({
+      training: new Training(
+        row.id,
+        row.title,
+        row.scheduledFor,
+        trainerId,
+        row.clientId,
+      ),
+      trainingRating: row.trainingRating,
+      trainingComment: row.trainingComment,
+      client: row.client,
+      blocks: row.blocks.map((block) => ({
+        block: new TrainingBlock(
+          block.id,
+          row.id,
+          block.exerciseId,
+          block.position,
+          block.sets,
+          block.repetitions,
+          block.restSeconds,
+          block.notes,
+          block.clientRating,
+        ),
+        exerciseName: block.exercise.name,
+      })),
+    }));
   }
 
   static async findForEdit(
     id: number,
     trainerId: number,
   ): Promise<TrainingEditData | null> {
-    return prisma.training.findFirst({
+    const row = await prisma.training.findFirst({
       where: { id, trainerId },
       select: {
         id: true,
@@ -175,6 +238,18 @@ export class TrainingRepository {
         },
       },
     });
+    if (!row) return null;
+    return {
+      training: new Training(
+        row.id,
+        row.title,
+        row.scheduledFor,
+        trainerId,
+        row.client.id,
+      ),
+      client: row.client,
+      blocks: row.blocks,
+    };
   }
 
   /** Briše trening (i njegove blokove kroz kaskadu) ako pripada treneru. */
@@ -184,47 +259,29 @@ export class TrainingRepository {
 }
 
 export type ClientTrainingDetail = {
-  id: number;
-  title: string;
-  scheduledFor: Date;
-  trainerId: number;
+  training: Training;
   trainingRating: number | null;
   trainingComment: string | null;
   trainer: { name: string; specialty: string; email: string };
   blocks: {
-    id: number;
-    sets: number;
-    repetitions: number;
-    restSeconds: number;
-    notes: string;
-    clientRating: number | null;
+    block: TrainingBlock;
     exercise: { name: string; description: string; videoPath: string | null };
   }[];
 };
 
 export type TrainerTrainingSummary = {
-  id: number;
-  title: string;
-  scheduledFor: Date;
-  clientId: number;
+  training: Training;
   trainingRating: number | null;
   trainingComment: string | null;
   client: { name: string; email: string };
   blocks: {
-    id: number;
-    sets: number;
-    repetitions: number;
-    restSeconds: number;
-    notes: string;
-    clientRating: number | null;
-    exercise: { name: string };
+    block: TrainingBlock;
+    exerciseName: string;
   }[];
 };
 
 export type TrainingEditData = {
-  id: number;
-  title: string;
-  scheduledFor: Date;
+  training: Training;
   client: { id: number; name: string };
   blocks: {
     exerciseId: number;

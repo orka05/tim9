@@ -30,12 +30,12 @@ export class EquipmentViewModel {
     ]);
 
     return {
-      owned: owned.map((item) => ({
-        id: item.id,
-        name: item.name,
-        description: item.description,
-        type: item.type,
-        isCustom: item.isCustom,
+      owned: owned.map(({ equipment }) => ({
+        id: equipment.id,
+        name: equipment.name,
+        description: equipment.description,
+        type: equipment.type,
+        isCustom: equipment.isCustom(),
       })),
       catalog: catalog.map((item) => ({
         id: item.id,

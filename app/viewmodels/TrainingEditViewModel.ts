@@ -3,13 +3,22 @@ import {
   ExerciseRepository,
   type ExerciseOption,
 } from "../repositories/ExerciseRepository";
-import {
-  TrainingRepository,
-  type TrainingEditData,
-} from "../repositories/TrainingRepository";
+import { TrainingRepository } from "../repositories/TrainingRepository";
 
 export type EditTrainingData = {
-  training: TrainingEditData;
+  training: {
+    id: number;
+    title: string;
+    scheduledFor: Date;
+    client: { id: number; name: string };
+    blocks: {
+      exerciseId: number;
+      sets: number;
+      repetitions: number;
+      restSeconds: number;
+      notes: string;
+    }[];
+  };
   exercises: ExerciseOption[];
 };
 
@@ -19,12 +28,21 @@ export class TrainingEditViewModel {
     trainingId: number,
     trainerId: number,
   ): Promise<EditTrainingData | null> {
-    const [training, exercises] = await Promise.all([
+    const [data, exercises] = await Promise.all([
       TrainingRepository.findForEdit(trainingId, trainerId),
       ExerciseRepository.findOptionsByTrainer(trainerId),
     ]);
 
-    if (!training) return null;
-    return { training, exercises };
+    if (!data) return null;
+    return {
+      training: {
+        id: data.training.id,
+        title: data.training.title,
+        scheduledFor: data.training.scheduledFor,
+        client: data.client,
+        blocks: data.blocks,
+      },
+      exercises,
+    };
   }
 }
