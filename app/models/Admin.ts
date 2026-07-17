@@ -1,10 +1,14 @@
-/** Domenski entitet Administratora. */
-export class Admin {
+import { User } from "./User";
+
+/** Domenski entitet Administratora. Nasleđuje zajedničke atribute iz klase `User`. */
+export class Admin extends User {
   constructor(
-    public readonly id: number,
-    public name: string,
-    public email: string,
-    public password: string,
+    id: number,
+    name: string,
+    email: string,
+    password: string,
     public readonly createdAt: Date,
-  ) {}
+  ) {
+    super(id, name, email, password);
+  }
 }

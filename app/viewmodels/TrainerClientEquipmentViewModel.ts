@@ -78,12 +78,12 @@ export class TrainerClientEquipmentViewModel {
           year: "numeric",
         }),
       })),
-      equipment: equipment.map((item) => ({
+      equipment: equipment.map(({ equipment: item }) => ({
         id: item.id,
         name: item.name,
         description: item.description,
         type: item.type,
-        isCustom: item.isCustom,
+        isCustom: item.isCustom(),
       })),
     };
   }

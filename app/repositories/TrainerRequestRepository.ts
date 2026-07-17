@@ -1,13 +1,13 @@
 import "server-only";
 import { prisma } from "../lib/prisma";
-import type { TrainerRequestStatus } from "../models/TrainerRequest";
+import {
+  TrainerRequest,
+  type TrainerRequestStatus,
+} from "../models/TrainerRequest";
 
+/** Zahtev (kao domenska instanca) zajedno sa podacima klijenta koji ga je poslao. */
 export type TrainerRequestWithClient = {
-  id: number;
-  message: string;
-  status: TrainerRequestStatus;
-  createdAt: Date;
-  clientId: number;
+  request: TrainerRequest;
   clientName: string;
   clientEmail: string;
   clientRating: number;
@@ -57,11 +57,15 @@ export class TrainerRequestRepository {
       orderBy: [{ status: "asc" }, { createdAt: "desc" }],
     });
     return rows.map((row) => ({
-      id: row.id,
-      message: row.message,
-      status: row.status as TrainerRequestStatus,
-      createdAt: row.createdAt,
-      clientId: row.clientId,
+      request: new TrainerRequest(
+        row.id,
+        row.message,
+        row.status as TrainerRequestStatus,
+        row.clientId,
+        row.trainerId,
+        row.createdAt,
+        row.respondedAt,
+      ),
       clientName: row.client.name,
       clientEmail: row.client.email,
       clientRating: row.client.rating,

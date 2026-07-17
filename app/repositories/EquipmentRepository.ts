@@ -1,6 +1,7 @@
 import "server-only";
 import { prisma } from "../lib/prisma";
 import { Equipment, type EquipmentType } from "../models/Equipment";
+import { ClientEquipment } from "../models/ClientEquipment";
 import type { Equipment as EquipmentRow } from "../generated/prisma/client";
 
 type BaseEquipmentInput = {
@@ -16,13 +17,10 @@ type CustomEquipmentInput = {
   clientId: number;
 };
 
-/** Oprema koju klijent poseduje, sa oznakom da li je njegova custom stavka. */
+/** Oprema koju klijent poseduje: spona vlasništva (`ClientEquipment`) + sama `Equipment`. */
 export type OwnedEquipment = {
-  id: number;
-  name: string;
-  description: string;
-  type: EquipmentType;
-  isCustom: boolean;
+  ownership: ClientEquipment;
+  equipment: Equipment;
 };
 
 /**
@@ -89,6 +87,8 @@ export class EquipmentRepository {
       where: { clientId },
       orderBy: { createdAt: "desc" },
       select: {
+        equipmentId: true,
+        createdAt: true,
         equipment: {
           select: {
             id: true,
@@ -101,12 +101,16 @@ export class EquipmentRepository {
         },
       },
     });
-    return rows.map(({ equipment }) => ({
-      id: equipment.id,
-      name: equipment.name,
-      description: equipment.description,
-      type: equipment.type as EquipmentType,
-      isCustom: !equipment.isBase && equipment.createdById === clientId,
+    return rows.map((row) => ({
+      ownership: new ClientEquipment(clientId, row.equipmentId, row.createdAt),
+      equipment: new Equipment(
+        row.equipment.id,
+        row.equipment.name,
+        row.equipment.description,
+        row.equipment.type as EquipmentType,
+        row.equipment.isBase,
+        row.equipment.createdById,
+      ),
     }));
   }
 
