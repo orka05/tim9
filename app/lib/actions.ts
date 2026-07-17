@@ -168,16 +168,16 @@ export async function updateProfileAction(
   if (session.role === "trainer") {
     const specialty = String(formData.get("specialty") ?? "").trim();
     const city = String(formData.get("city") ?? "").trim();
-    const pricePerSession = Number(formData.get("pricePerSession") ?? 0);
-    if (!Number.isFinite(pricePerSession) || pricePerSession < 0) {
-      return { error: "Cena po sesiji mora biti pozitivan broj." };
+    const pricePerMonth = Number(formData.get("pricePerMonth") ?? 0);
+    if (!Number.isFinite(pricePerMonth) || pricePerMonth < 0) {
+      return { error: "Mesečna cena mora biti pozitivan broj." };
     }
     await TrainerRepository.updateProfile(session.userId, {
       name,
       email,
       specialty,
       city,
-      pricePerSession,
+      pricePerMonth,
       password: hashedPassword,
     });
   } else if (session.role === "admin") {
@@ -187,10 +187,38 @@ export async function updateProfileAction(
       password: hashedPassword,
     });
   } else {
+    const parseMetric = (
+      raw: FormDataEntryValue | null,
+      min: number,
+      max: number,
+    ): { ok: true; value: number | null } | { ok: false } => {
+      const str = String(raw ?? "").trim();
+      if (str === "") return { ok: true, value: null };
+      const n = Number(str);
+      if (!Number.isInteger(n) || n < min || n > max) return { ok: false };
+      return { ok: true, value: n };
+    };
+
+    const height = parseMetric(formData.get("height"), 50, 300);
+    const weight = parseMetric(formData.get("weight"), 20, 500);
+    const age = parseMetric(formData.get("age"), 5, 120);
+    if (!height.ok) {
+      return { error: "Visina mora biti ceo broj između 50 i 300 cm." };
+    }
+    if (!weight.ok) {
+      return { error: "Težina mora biti ceo broj između 20 i 500 kg." };
+    }
+    if (!age.ok) {
+      return { error: "Godine moraju biti ceo broj između 5 i 120." };
+    }
+
     await ClientRepository.updateProfile(session.userId, {
       name,
       email,
       password: hashedPassword,
+      height: height.value,
+      weight: weight.value,
+      age: age.value,
     });
   }
 

@@ -13,7 +13,7 @@ type TrainerProfileInput = {
   email: string;
   specialty: string;
   city: string;
-  pricePerSession: number;
+  pricePerMonth: number;
   password?: string;
 };
 
@@ -30,7 +30,7 @@ export class TrainerRepository {
       row.password,
       row.specialty,
       row.city,
-      row.pricePerSession,
+      row.pricePerMonth,
       row.rating,
       row.status as TrainerStatus,
     );

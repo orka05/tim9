@@ -103,9 +103,9 @@ export default function ExerciseItem({ item }: { item: ExerciseDTO }) {
   return (
     <li className="flex flex-col rounded-2xl border border-zinc-200 bg-white p-5 text-left shadow-sm transition hover:shadow-md dark:border-zinc-800 dark:bg-zinc-950">
       <div className="flex items-start justify-between gap-3">
-        <h3 className="text-lg font-semibold">{item.name}</h3>
+        <h3 className="min-w-0 text-lg font-semibold">{item.name}</h3>
         <span
-          className={`rounded-full px-3 py-1 text-xs font-medium ${
+          className={`shrink-0 rounded-full px-3 py-1 text-xs font-medium ${
             cat?.badge ??
             "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300"
           }`}

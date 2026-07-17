@@ -3,6 +3,7 @@ import AuthNav from "@/app/components/AuthNav";
 import Logo from "@/app/components/Logo";
 import ThemeToggle from "@/app/components/ThemeToggle";
 import TrainerRequestModal from "@/app/components/TrainerRequestModal";
+import TrainerReviewsModal from "@/app/components/TrainerReviewsModal";
 import { respondTrainerRequestAction, deleteTrainerAction } from "@/app/lib/actions";
 import { getSession } from "@/app/lib/session";
 import { AdminDashboardViewModel } from "@/app/viewmodels/AdminDashboardViewModel";
@@ -100,13 +101,13 @@ async function ClientHome({ clientId }: { clientId: number }) {
                 className="flex flex-col rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-950"
               >
                 <div className="flex items-start justify-between gap-3">
-                  <div>
+                  <div className="min-w-0">
                     <h2 className="text-xl font-bold">{trainer.name}</h2>
                     <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
                       {trainer.specialty || "Trener"}
                     </p>
                   </div>
-                  <span className="whitespace-nowrap text-sm font-semibold text-amber-500">
+                  <span className="shrink-0 whitespace-nowrap text-sm font-semibold text-amber-500">
                     ★ {trainer.rating}
                   </span>
                 </div>
@@ -115,10 +116,16 @@ async function ClientHome({ clientId }: { clientId: number }) {
                     📍 {trainer.city || "Grad nije naveden"}
                   </p>
                   <p className="font-semibold text-indigo-600 dark:text-indigo-400">
-                    {trainer.pricePerSession > 0
-                      ? `${trainer.pricePerSession} RSD po treningu`
+                    {trainer.pricePerMonth > 0
+                      ? `${trainer.pricePerMonth} RSD mesečno`
                       : "Cena po dogovoru"}
                   </p>
+                </div>
+                <div className="mt-3 border-t border-zinc-100 pt-3 dark:border-zinc-800">
+                  <TrainerReviewsModal
+                    trainerName={trainer.name}
+                    reviews={trainer.reviews}
+                  />
                 </div>
                 <div className="mt-auto flex flex-col">
                   <TrainerRequestModal
@@ -173,7 +180,7 @@ async function TrainerHome({ trainerId }: { trainerId: number }) {
                 className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-800 dark:bg-zinc-950 sm:p-6"
               >
                 <div className="flex flex-wrap items-start justify-between gap-3">
-                  <div>
+                  <div className="min-w-0">
                     <h2 className="text-lg font-bold">{request.clientName}</h2>
                     <p className="text-sm text-zinc-500">{request.clientEmail}</p>
                     {request.status !== "REJECTED" && (
@@ -183,12 +190,12 @@ async function TrainerHome({ trainerId }: { trainerId: number }) {
                         rel="noopener noreferrer"
                         className="mt-1 inline-block text-sm font-medium text-indigo-600 hover:underline dark:text-indigo-400"
                       >
-                        Vidi opremu klijenta ↗
+                        Vidi podatke i opremu klijenta ↗
                       </a>
                     )}
                   </div>
                   <span
-                    className={`rounded-full px-3 py-1 text-xs font-semibold ${statusClass[request.status]}`}
+                    className={`shrink-0 rounded-full px-3 py-1 text-xs font-semibold ${statusClass[request.status]}`}
                   >
                     {statusLabel[request.status]}
                   </span>
@@ -290,11 +297,11 @@ async function AdminHome() {
                 key={trainer.id}
                 className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-950 sm:p-5"
               >
-                <div className="flex items-center gap-4">
-                  <span className="w-6 text-center text-sm font-bold text-zinc-400">
+                <div className="flex min-w-0 items-center gap-4">
+                  <span className="w-6 shrink-0 text-center text-sm font-bold text-zinc-400">
                     {trainer.rank}.
                   </span>
-                  <div>
+                  <div className="min-w-0">
                     <h2 className="text-lg font-bold">{trainer.name}</h2>
                     <p className="text-sm text-zinc-500">
                       {trainer.specialty}
@@ -302,8 +309,8 @@ async function AdminHome() {
                     </p>
                   </div>
                 </div>
-                <div className="flex items-center gap-4">
-                  <span className="whitespace-nowrap text-sm font-semibold text-amber-500">
+                <div className="flex shrink-0 items-center gap-4">
+                  <span className="shrink-0 whitespace-nowrap text-sm font-semibold text-amber-500">
                     ★ {trainer.rating}
                   </span>
                   <form action={deleteTrainerAction}>

@@ -4,6 +4,7 @@ import AuthNav from "@/app/components/AuthNav";
 import Logo from "@/app/components/Logo";
 import ThemeToggle from "@/app/components/ThemeToggle";
 import TrainingBuilder from "@/app/components/TrainingBuilder";
+import DeleteTrainingButton from "@/app/components/DeleteTrainingButton";
 import { requireSession } from "@/app/lib/session";
 import { TrainingEditViewModel } from "@/app/viewmodels/TrainingEditViewModel";
 
@@ -51,6 +52,21 @@ export default async function IzmeniTreningPage({
         <p className="mt-2 text-zinc-600 dark:text-zinc-400">
           Promeni datum, podatke blokova ili njihov redosled.
         </p>
+
+        <div className="mt-5 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-red-200 bg-red-50/50 p-4 dark:border-red-900/50 dark:bg-red-950/20">
+          <div>
+            <p className="text-sm font-semibold text-red-700 dark:text-red-400">
+              Obriši trening
+            </p>
+            <p className="text-sm text-red-600/80 dark:text-red-400/70">
+              Ako je trening napravljen greškom, možeš ga trajno ukloniti.
+            </p>
+          </div>
+          <DeleteTrainingButton
+            trainingId={training.id}
+            clientId={training.client.id}
+          />
+        </div>
 
         <div className="mt-8">
           <TrainingBuilder

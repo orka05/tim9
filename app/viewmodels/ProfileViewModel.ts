@@ -11,8 +11,11 @@ export type ProfileData = {
   role: Role;
   specialty?: string;
   city?: string;
-  pricePerSession?: number;
+  pricePerMonth?: number;
   rating?: number;
+  height?: number | null;
+  weight?: number | null;
+  age?: number | null;
 };
 
 /** ViewModel za stranicu profila (klijent / trener / admin). */
@@ -28,7 +31,7 @@ export class ProfileViewModel {
         role: "trainer",
         specialty: trainer.specialty,
         city: trainer.city,
-        pricePerSession: trainer.pricePerSession,
+        pricePerMonth: trainer.pricePerMonth,
         rating: trainer.rating,
       };
     }
@@ -41,6 +44,15 @@ export class ProfileViewModel {
 
     const client = await ClientRepository.findById(userId);
     if (!client) return null;
-    return { id: client.id, name: client.name, email: client.email, role: "client" };
+    return {
+      id: client.id,
+      name: client.name,
+      email: client.email,
+      role: "client",
+      height: client.height,
+      weight: client.weight,
+      age: client.age,
+      rating: client.rating,
+    };
   }
 }

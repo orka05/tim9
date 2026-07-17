@@ -13,7 +13,7 @@ export class Trainer {
     public password: string,
     public specialty: string,
     public city: string,
-    public pricePerSession: number,
+    public pricePerMonth: number,
     public rating: number,
     public status: TrainerStatus,
   ) {}

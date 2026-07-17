@@ -31,13 +31,15 @@ model Trainer {
   password        String
   specialty       String           @default("")
   city            String           @default("")
-  pricePerSession Int              @default(0)
+  pricePerMonth   Int              @default(0)
   rating          Float            @default(1.0)
   status          TrainerStatus    @default(PENDING)
   createdAt       DateTime         @default(now())
   requests        TrainerRequest[]
   exercises       Exercise[]
   trainings       Training[]
+  reviews         TrainerReview[]
+  clientReviews   ClientReview[]
 }
 
 model Client {
@@ -45,11 +47,17 @@ model Client {
   name            String
   email           String            @unique
   password        String
+  height          Int?
+  weight          Int?
+  age             Int?
+  rating          Float             @default(0)
   createdAt       DateTime          @default(now())
   requests        TrainerRequest[]
   trainings       Training[]
   ownedEquipment  ClientEquipment[]
   customEquipment Equipment[]       @relation("CustomEquipment")
+  trainerReviews  TrainerReview[]
+  reviews         ClientReview[]
 }
 
 model Admin {
@@ -101,7 +109,7 @@ model Training {
   title        String          @db.VarChar(120)
   scheduledFor DateTime        @db.Date
   trainingRating Int?
-  trainerRating  Int?
+  trainingComment String?       @db.VarChar(500)
   trainerId    Int
   clientId     Int
   createdAt    DateTime        @default(now())
@@ -129,6 +137,40 @@ model TrainingBlock {
 
   @@unique([trainingId, position])
   @@index([exerciseId])
+}
+
+// Ocena trenera od strane klijenta — jedna po paru (klijent, trener), nezavisna
+// od treninga. Prosečna ocena trenera se računa kao AVG(rating) nad ovom tabelom.
+model TrainerReview {
+  id        Int      @id @default(autoincrement())
+  trainerId Int
+  clientId  Int
+  rating    Int
+  comment   String?  @db.VarChar(500)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  trainer   Trainer  @relation(fields: [trainerId], references: [id], onDelete: Cascade)
+  client    Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  @@unique([trainerId, clientId])
+  @@index([trainerId])
+}
+
+// Ocena klijenta od strane trenera (kakav je bio u saradnji) — jedna po paru
+// (trener, klijent). Prosečna ocena klijenta = AVG(rating) nad ovom tabelom.
+model ClientReview {
+  id        Int      @id @default(autoincrement())
+  clientId  Int
+  trainerId Int
+  rating    Int
+  comment   String?  @db.VarChar(500)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  client    Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  trainer   Trainer  @relation(fields: [trainerId], references: [id], onDelete: Cascade)
+
+  @@unique([trainerId, clientId])
+  @@index([clientId])
 }
 
 

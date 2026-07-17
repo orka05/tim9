@@ -1,6 +1,7 @@
 import Logo from "@/app/components/Logo";
 import AuthNav from "@/app/components/AuthNav";
 import ThemeToggle from "@/app/components/ThemeToggle";
+import TrainerReviewsModal from "@/app/components/TrainerReviewsModal";
 import Link from "next/link";
 import { TrainersSearchViewModel } from "@/app/viewmodels/TrainersSearchViewModel";
 
@@ -96,20 +97,23 @@ export default async function TrainersPage({
                 key={t.id}
                 className="flex flex-col rounded-2xl border border-zinc-200 bg-white p-5 text-left shadow-sm transition hover:shadow-md dark:border-zinc-800 dark:bg-zinc-950"
               >
-                <div className="flex items-center justify-between">
-                  <h3 className="text-lg font-semibold">{t.name}</h3>
-                  <span className="flex items-center gap-1 text-sm font-medium text-amber-500">
+                <div className="flex items-center justify-between gap-2">
+                  <h3 className="min-w-0 text-lg font-semibold">{t.name}</h3>
+                  <span className="flex shrink-0 items-center gap-1 whitespace-nowrap text-sm font-medium text-amber-500">
                     ★ {t.rating}
                   </span>
                 </div>
                 <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
                   {t.specialty}
                 </p>
-                <div className="mt-2 flex items-center justify-between text-sm">
-                  <span className="text-zinc-500">📍 {t.city}</span>
-                  <span className="font-medium text-indigo-600">
-                    {t.pricePerSession} RSD
+                <div className="mt-2 flex items-center justify-between gap-2 text-sm">
+                  <span className="min-w-0 text-zinc-500">📍 {t.city}</span>
+                  <span className="shrink-0 font-medium text-indigo-600">
+                    {t.pricePerMonth} RSD / mesec
                   </span>
+                </div>
+                <div className="mt-3 border-t border-zinc-100 pt-3 dark:border-zinc-800">
+                  <TrainerReviewsModal trainerName={t.name} reviews={t.reviews} />
                 </div>
               </li>
             ))}

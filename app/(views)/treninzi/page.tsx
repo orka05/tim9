@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import AuthNav from "@/app/components/AuthNav";
 import Logo from "@/app/components/Logo";
 import ThemeToggle from "@/app/components/ThemeToggle";
+import DeleteTrainingButton from "@/app/components/DeleteTrainingButton";
 import { requireSession } from "@/app/lib/session";
 import { TrainerTrainingsViewModel } from "@/app/viewmodels/TrainerTrainingsViewModel";
 
@@ -116,7 +117,7 @@ export default async function TreninziPage({
                 className="overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-950"
               >
                 <div className="flex flex-wrap items-start justify-between gap-4 border-b border-zinc-200 p-5 dark:border-zinc-800 sm:p-6">
-                  <div>
+                  <div className="min-w-0">
                     <h2 className="text-xl font-bold">{training.title}</h2>
                     <p className="mt-1 text-sm text-zinc-500">
                       Klijent: <span className="font-semibold">{training.client.name}</span>
@@ -143,6 +144,10 @@ export default async function TreninziPage({
                     >
                       Izmeni trening
                     </Link>
+                    <DeleteTrainingButton
+                      trainingId={training.id}
+                      clientId={training.clientId}
+                    />
                   </div>
                 </div>
 

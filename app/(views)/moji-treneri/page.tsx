@@ -43,14 +43,14 @@ export default async function MojiTreneriPage() {
               >
                 <div className="border-b border-zinc-200 p-5 dark:border-zinc-800 sm:p-6">
                   <div className="flex items-start justify-between gap-3">
-                    <div>
+                    <div className="min-w-0">
                       <h2 className="text-xl font-bold">{trainer.name}</h2>
                       <p className="mt-1 text-sm text-zinc-500">
                         {trainer.specialty || "Trener"}
                         {trainer.city && ` · ${trainer.city}`}
                       </p>
                     </div>
-                    <span className="whitespace-nowrap text-sm font-semibold text-amber-500">
+                    <span className="shrink-0 whitespace-nowrap text-sm font-semibold text-amber-500">
                       ★ {trainer.rating}
                     </span>
                   </div>
@@ -72,12 +72,12 @@ export default async function MojiTreneriPage() {
                             href={`/moji-treninzi/${training.id}`}
                             className="flex items-center justify-between gap-4 rounded-xl border border-zinc-200 px-4 py-3 transition hover:border-indigo-300 hover:bg-indigo-50 dark:border-zinc-800 dark:hover:border-indigo-800 dark:hover:bg-indigo-950/30"
                           >
-                            <span className="font-semibold">{training.title}</span>
+                            <span className="min-w-0 font-semibold">{training.title}</span>
                             <time
                               dateTime={training.scheduledFor
                                 .toISOString()
                                 .slice(0, 10)}
-                              className="whitespace-nowrap text-sm text-zinc-500"
+                              className="shrink-0 whitespace-nowrap text-sm text-zinc-500"
                             >
                               {training.scheduledFor.toLocaleDateString(
                                 "sr-Latn-RS",

@@ -8,18 +8,18 @@ const prisma = new PrismaClient({ adapter });
 
 // Lozinka za sve seed naloge: "trener123" (heširana pri unosu)
 const trainers = [
-  { name: "Ana Jovanović", email: "ana.jovanovic@gmail.com", specialty: "Snaga i kondicija", city: "Beograd", pricePerSession: 2500, rating: 9.4 },
-  { name: "Marko Ilić", email: "marko.ilic@gmail.com", specialty: "Mršavljenje", city: "Novi Sad", pricePerSession: 2200, rating: 8.1 },
-  { name: "Sale Lazic", email: "sale.lazic@gmail.com", specialty: "Teretana", city: "Novi Sad", pricePerSession: 7000, rating: 10.0 },
-  { name: "Stefan Nikolić", email: "stefan.nikolic@gmail.com", specialty: "Bodybuilding", city: "Beograd", pricePerSession: 3000, rating: 7.6 },
-  { name: "Milica Popović", email: "milica.popovic@gmail.com", specialty: "Funkcionalni trening", city: "Kragujevac", pricePerSession: 2400, rating: 8.9 },
-  { name: "Nikola Đorđević", email: "nikola.djordjevic@gmail.com", specialty: "Kardio i izdržljivost", city: "Novi Sad", pricePerSession: 2100, rating: 6.7 },
-  { name: "Tijana Marić", email: "tijana.maric@gmail.com", specialty: "Pilates", city: "Beograd", pricePerSession: 2300, rating: 9.1 },
-  { name: "Luka Petrović", email: "luka.petrovic@gmail.com", specialty: "CrossFit", city: "Subotica", pricePerSession: 2600, rating: 8.3 },
-  { name: "Ivana Lukić", email: "ivana.lukic@gmail.com", specialty: "Snaga i kondicija", city: "Niš", pricePerSession: 2150, rating: 7.2 },
-  { name: "Vladimir Stojanović", email: "vladimir.stojanovic@gmail.com", specialty: "Bodybuilding", city: "Beograd", pricePerSession: 3200, rating: 9.6 },
+  { name: "Ana Jovanović", email: "ana.jovanovic@gmail.com", specialty: "Snaga i kondicija", city: "Beograd", pricePerMonth: 2500, rating: 9.4 },
+  { name: "Marko Ilić", email: "marko.ilic@gmail.com", specialty: "Mršavljenje", city: "Novi Sad", pricePerMonth: 2200, rating: 8.1 },
+  { name: "Sale Lazic", email: "sale.lazic@gmail.com", specialty: "Teretana", city: "Novi Sad", pricePerMonth: 7000, rating: 10.0 },
+  { name: "Stefan Nikolić", email: "stefan.nikolic@gmail.com", specialty: "Bodybuilding", city: "Beograd", pricePerMonth: 3000, rating: 7.6 },
+  { name: "Milica Popović", email: "milica.popovic@gmail.com", specialty: "Funkcionalni trening", city: "Kragujevac", pricePerMonth: 2400, rating: 8.9 },
+  { name: "Nikola Đorđević", email: "nikola.djordjevic@gmail.com", specialty: "Kardio i izdržljivost", city: "Novi Sad", pricePerMonth: 2100, rating: 6.7 },
+  { name: "Tijana Marić", email: "tijana.maric@gmail.com", specialty: "Pilates", city: "Beograd", pricePerMonth: 2300, rating: 9.1 },
+  { name: "Luka Petrović", email: "luka.petrovic@gmail.com", specialty: "CrossFit", city: "Subotica", pricePerMonth: 2600, rating: 8.3 },
+  { name: "Ivana Lukić", email: "ivana.lukic@gmail.com", specialty: "Snaga i kondicija", city: "Niš", pricePerMonth: 2150, rating: 7.2 },
+  { name: "Vladimir Stojanović", email: "vladimir.stojanovic@gmail.com", specialty: "Bodybuilding", city: "Beograd", pricePerMonth: 3200, rating: 9.6 },
   // Test trener za laku prijavu
-  { name: "Trener Test", email: "trener@gmail.com", specialty: "Snaga i kondicija", city: "Beograd", pricePerSession: 2000, rating: 8.0 },
+  { name: "Trener Test", email: "trener@gmail.com", specialty: "Snaga i kondicija", city: "Beograd", pricePerMonth: 2000, rating: 8.0 },
 ];
 
 const clients = [
